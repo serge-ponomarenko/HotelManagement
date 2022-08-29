@@ -1,17 +1,16 @@
 package ua.cc.spon.controller;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import ua.cc.spon.db.dao.DAOFactory;
 import ua.cc.spon.db.dao.UserSettingsDAO;
 import ua.cc.spon.db.entity.UserSettings;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Enumeration;
 
 @WebServlet("/localeAction")
 public class LocaleController extends HttpServlet {

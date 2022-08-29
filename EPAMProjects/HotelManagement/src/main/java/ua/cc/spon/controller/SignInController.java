@@ -1,5 +1,9 @@
 package ua.cc.spon.controller;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
 import ua.cc.spon.db.dao.DAOFactory;
 import ua.cc.spon.db.dao.UserDAO;
 import ua.cc.spon.db.dao.UserSettingsDAO;
@@ -8,10 +12,6 @@ import ua.cc.spon.db.entity.UserSettings;
 import ua.cc.spon.exception.IllegalPasswordException;
 import ua.cc.spon.exception.NoUserFoundException;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 

@@ -2,16 +2,9 @@ package ua.cc.spon;
 
 import ua.cc.spon.db.dao.DAOFactory;
 import ua.cc.spon.db.dao.RoomDAO;
-import ua.cc.spon.db.dao.UserDAO;
-import ua.cc.spon.db.entity.User;
 import ua.cc.spon.exception.IllegalPasswordException;
 import ua.cc.spon.exception.NoUserFoundException;
 import ua.cc.spon.exception.UserIsAlreadyRegisteredException;
-import ua.cc.spon.util.HotelHelper;
-
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
 
 public class Main {
 

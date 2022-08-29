@@ -1,5 +1,12 @@
 package ua.cc.spon.controller;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import ua.cc.spon.db.dao.DAOFactory;
 import ua.cc.spon.db.dao.UserDAO;
 import ua.cc.spon.db.dao.UserSettingsDAO;
@@ -7,13 +14,6 @@ import ua.cc.spon.db.entity.User;
 import ua.cc.spon.db.entity.UserSettings;
 import ua.cc.spon.exception.UserIsAlreadyRegisteredException;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 @WebServlet("/signUpAction")
