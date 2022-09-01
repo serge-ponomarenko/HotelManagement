@@ -1,4 +1,5 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <fmt:setLocale value="${sessionScope.userSettings.getLocale()}"/>
 <fmt:setBundle basename="Strings"/>
 <header class="navbar navbar-expand-md navbar-light d-print-none">
@@ -11,13 +12,20 @@
                 <img src="./static/logo.svg" width="110" height="32" alt="Hotel" class="navbar-brand-image">
             </a>
         </h1>
+
+        <div class="collapse navbar-collapse order-md-last" id="navbar-menu">
+
+        </div>
         <div class="navbar-nav flex-row order-md-last">
-            <div class="nav-item d-none d-md-flex me-3">
-                <div class="btn-list">
-                    <a href="." class="btn" target="_blank" rel="noreferrer">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
-                             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
-                             stroke-linecap="round" stroke-linejoin="round">
+            <div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center me-3">
+                <ul class="navbar-nav">
+
+                    <li class="nav-item active dropdown">
+                        <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+                    <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
+                           viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                           stroke-linecap="round" stroke-linejoin="round">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                             <rect x="5" y="5" width="14" height="14" rx="1"></rect>
                             <path d="M8 10v-2h2m6 6v2h-2m-4 0h-2v-2m8 -4v-2h-2"></path>
@@ -30,22 +38,60 @@
                             <path d="M14 21v-2"></path>
                             <path d="M10 21v-2"></path>
                         </svg>
-                        <fmt:message key="header.admin-menu"/>
-                    </a>
-
-                    <a href="." class="btn" target="_blank" rel="noreferrer">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon text-pink" width="24" height="24"
-                             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
-                             stroke-linecap="round" stroke-linejoin="round">
+                    </span>
+                            <span class="nav-link-title">
+                      <fmt:message key="header.admin-menu"/>
+                    </span>
+                        </a>
+                        <div class="dropdown-menu">
+                            <div class="dropdown-menu-columns">
+                                <div class="dropdown-menu-column">
+                                    <a class="dropdown-item" href="hotelOccupancyAction">
+                                        Hotel Occupancy
+                                    </a>
+                                    <a class="dropdown-item" href="./layout-boxed.html">
+                                        Boxed
+                                        <span class="badge badge-sm bg-green text-uppercase ms-2">New</span>
+                                    </a>
+                                    <a class="dropdown-item" href="./layout-vertical.html">
+                                        Vertical
+                                    </a>
+                                    <a class="dropdown-item" href="./layout-vertical-transparent.html">
+                                        Vertical transparent
+                                    </a>
+                                    <a class="dropdown-item" href="./layout-vertical-right.html">
+                                        Right vertical
+                                    </a>
+                                    <a class="dropdown-item active" href="./layout-condensed.html">
+                                        Condensed
+                                    </a>
+                                    <a class="dropdown-item" href="./layout-combo.html">
+                                        Combined
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="myBookingsAction">
+                    <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/ghost -->
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon text-pink" width="24" height="24"
+                           viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                           stroke-linecap="round" stroke-linejoin="round">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                             <path d="M3 21v-13l9 -4l9 4v13"></path>
                             <path d="M13 13h4v8h-10v-6h6"></path>
                             <path d="M13 21v-9a1 1 0 0 0 -1 -1h-2a1 1 0 0 0 -1 1v3"></path>
                         </svg>
-                        <fmt:message key="header.my-bookings"/>
-                    </a>
-                </div>
+                    </span>
+                            <span class="nav-link-title">
+                      <fmt:message key="header.my-bookings"/>
+                    </span>
+                        </a>
+                    </li>
+                </ul>
             </div>
+
 
             <div class="nav-item d-none d-md-flex me-3">
                 <a href="localeAction?locale=en" class="d-none d-sm-inline-block">
@@ -92,12 +138,13 @@
                 </a>
                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
                     <a href="#" class="dropdown-item"><fmt:message key="header.profile-account"/></a>
-                    <a href="#" class="dropdown-item"><fmt:message key="header.my-bookings"/></a>
+                    <a href="myBookingsAction" class="dropdown-item"><fmt:message key="header.my-bookings"/></a>
                     <div class="dropdown-divider"></div>
                     <a href="#" class="dropdown-item"><fmt:message key="header.settings"/></a>
                     <a href="/logoutAction" class="dropdown-item"><fmt:message key="header.logout"/></a>
                 </div>
             </div>
         </div>
+
     </div>
 </header>

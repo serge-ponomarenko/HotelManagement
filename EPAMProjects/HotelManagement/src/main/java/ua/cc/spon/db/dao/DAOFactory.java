@@ -40,6 +40,8 @@ public abstract class DAOFactory {
 	public abstract UserSettingsDAO getUserSettingsDAO();
 	public abstract RoomDAO getRoomDAO();
 	public abstract RoomCategoryDAO getRoomCategoryDAO();
+	public abstract ReservationDAO getReservationDAO();
+	public abstract StatusDAO getStatusDAO();
 
 
 }

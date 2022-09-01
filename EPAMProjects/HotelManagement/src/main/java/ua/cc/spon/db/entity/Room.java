@@ -18,14 +18,6 @@ public class Room {
 
     private RoomCategory roomCategory;
 
-    private Status status;
-
     private List<String> images = new ArrayList<>();
 
-    private enum Status {
-        FREE,
-        BOOKED,
-        BUSY,
-        UNAVAILABLE
-    }
 }

@@ -13,7 +13,7 @@ import java.util.List;
 
 public class PostgresUserDAO implements UserDAO {
 
-    private static final String FIND_ALL_USERS = "select * from users";
+    private static final String FIND_ALL_USERS = "SELECT * FROM users";
     private static final String INSERT_USER = "INSERT INTO users (email, hash_password, first_name, last_name, role_id) " +
             "VALUES(?, crypt(?, gen_salt('bf', 8)), ?, ?, (SELECT role_id FROM user_roles where name = ?))";
     private static final String FIND_USER_BY_EMAIL_PASSWORD = "SELECT user_id, email, hash_password, first_name, last_name, " +
@@ -147,9 +147,11 @@ public class PostgresUserDAO implements UserDAO {
 
     private User extractUser(ResultSet rs) throws SQLException {
         User user = new User();
-        user.setId(rs.getInt("id"));
+        user.setId(rs.getInt("user_id"));
+        user.setFirstName(rs.getString("first_name"));
+        user.setLastName(rs.getString("last_name"));
         user.setEmail(rs.getString("email"));
-        user.setHashPassword(rs.getString("password"));
+        user.setHashPassword(rs.getString("hash_password"));
         return user;
     }
 

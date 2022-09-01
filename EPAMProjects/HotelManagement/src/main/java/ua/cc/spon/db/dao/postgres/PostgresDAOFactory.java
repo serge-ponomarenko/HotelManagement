@@ -22,4 +22,11 @@ public class PostgresDAOFactory extends DAOFactory {
 	public RoomCategoryDAO getRoomCategoryDAO() {
 		return new PostgresRoomCategoryDAO();
 	}
+	@Override
+	public ReservationDAO getReservationDAO() {
+		return new PostgresReservationDAO();
+	}
+	public StatusDAO getStatusDAO() {
+		return new PostgresStatusDAO();
+	}
 }
