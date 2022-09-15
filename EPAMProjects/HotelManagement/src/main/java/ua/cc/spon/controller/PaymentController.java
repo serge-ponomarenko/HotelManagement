@@ -22,7 +22,7 @@ public class PaymentController extends HttpServlet {
     private static boolean USER_HAS_MONEY = true;
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         ServletContext context = req.getServletContext();
         DAOFactory factory = (DAOFactory) context.getAttribute("DAOFactory");
@@ -44,7 +44,6 @@ public class PaymentController extends HttpServlet {
             //throw new UserHasNotEnoughMoneyException();
         }
 
-        //req.getRequestDispatcher("index.jsp").forward(req, resp);
         resp.sendRedirect("myBookingsAction");
 
     }

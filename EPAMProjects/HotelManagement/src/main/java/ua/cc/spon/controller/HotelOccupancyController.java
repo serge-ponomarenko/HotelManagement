@@ -16,7 +16,6 @@ import ua.cc.spon.db.entity.UserSettings;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;

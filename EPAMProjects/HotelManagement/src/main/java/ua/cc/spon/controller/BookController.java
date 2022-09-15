@@ -24,7 +24,7 @@ import java.util.Optional;
 public class BookController extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         ServletContext context = req.getServletContext();
         DAOFactory factory = (DAOFactory) context.getAttribute("DAOFactory");
@@ -57,8 +57,6 @@ public class BookController extends HttpServlet {
 
             reservationDAO.insert(reservation);
 
-
-        //req.getRequestDispatcher("index.jsp").forward(req, resp);
         resp.sendRedirect("myBookingsAction");
 
     }

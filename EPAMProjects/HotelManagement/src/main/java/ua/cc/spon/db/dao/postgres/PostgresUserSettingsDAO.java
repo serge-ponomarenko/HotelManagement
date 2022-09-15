@@ -8,16 +8,18 @@ import java.sql.*;
 
 public class PostgresUserSettingsDAO implements UserSettingsDAO {
 
-    private static final String INSERT_USER_SETTINGS = "INSERT INTO user_settings (user_id, locale, hash) " +
-            "VALUES(?, ?, ?)";
+    private static final String INSERT_USER_SETTINGS = "INSERT INTO user_settings (user_id, locale_id, hash) " +
+            "VALUES(?, (SELECT locale_id FROM locales WHERE locales.name = ?), ?)";
     private static final String UPDATE_USER_SETTINGS = "UPDATE user_settings SET " +
-            "user_id = ?, locale = ?, hash = ? " +
+            "user_id = ?, locale_id = (SELECT locale_id FROM locales WHERE locales.name = ?), hash = ? " +
             "WHERE user_settings_id = ?";
-    private static final String FIND_BY_USER_ID = "SELECT user_settings_id, user_id, locale, hash " +
+    private static final String FIND_BY_USER_ID = "SELECT user_settings_id, user_id, l.name, hash " +
             "FROM user_settings " +
+            "INNER JOIN locales l USING(locale_id) " +
             "WHERE user_id = ?";
-    private static final String FIND_BY_HASH = "SELECT user_settings_id, user_id, locale, hash " +
+    private static final String FIND_BY_HASH = "SELECT user_settings_id, user_id, l.name, hash " +
             "FROM user_settings " +
+            "INNER JOIN locales l USING(locale_id) " +
             "WHERE hash = ?";
 
 

@@ -12,10 +12,12 @@ import ua.cc.spon.db.dao.RoomDAO;
 import ua.cc.spon.db.entity.Room;
 import ua.cc.spon.db.entity.RoomCategory;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.service.PaginatorService;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +37,12 @@ public class IndexController extends HttpServlet {
 
         String locale = ((UserSettings) req.getSession().getAttribute("userSettings")).getLocale();
 
+        String message = null;
+        if (req.getSession().getAttribute("message") != null) {
+            message = (String) req.getSession().getAttribute("message");
+            req.getSession().removeAttribute("message");
+        }
+
         LocalDate checkinDate = LocalDate.parse(Optional.ofNullable(req.getParameter("checkin-date")).orElse("1970-01-01"));
         LocalDate checkoutDate = LocalDate.parse(Optional.ofNullable(req.getParameter("checkout-date")).orElse("2100-01-01"));
         int nights = (int) (checkoutDate.toEpochDay() - checkinDate.toEpochDay());
@@ -47,20 +55,8 @@ public class IndexController extends HttpServlet {
         BigDecimal priceFrom = new BigDecimal(stringPriceFrom == null || stringPriceFrom.isEmpty() ? "0" : stringPriceFrom);
         BigDecimal priceTo = new BigDecimal(stringPriceTo == null || stringPriceTo.isEmpty() ? "0" : stringPriceTo);
 
-        int page = 1;
-        if (req.getSession().getAttribute("page") != null) {
-            page = (int) req.getSession().getAttribute("page");
-        }
-
-        int showBy = 5;
-        if (req.getSession().getAttribute("showBy") != null) {
-            showBy = (int) req.getSession().getAttribute("showBy");
-        }
-
-        String sortBy = "price";
-        if (req.getSession().getAttribute("indexSortBy") != null) {
-            sortBy = (String) req.getSession().getAttribute("indexSortBy");
-        }
+        PaginatorService paginator =
+                new PaginatorService(req, "index", new Integer[]{5, 10, 20});
 
         List<Room> rooms = roomDAO.findFreeRooms(checkinDate, checkoutDate, locale);
         List<RoomCategory> roomCategories = roomCategoryDAO.findALL(locale);
@@ -73,10 +69,7 @@ public class IndexController extends HttpServlet {
 
         Predicate<Room> categoryPredicate = room -> {
             if (roomCategoryId == null) return true;
-            for (String s : roomCategoryId) {
-                if (Long.parseLong(s) == room.getRoomCategory().getId()) return true;
-            }
-            return false;
+            return Arrays.stream(roomCategoryId).anyMatch(s -> Long.parseLong(s) == room.getRoomCategory().getId());
         };
 
         Predicate<Room> personsPredicate = room -> room.getOccupancy() >= personCount;
@@ -87,9 +80,8 @@ public class IndexController extends HttpServlet {
                 .filter(personsPredicate)
                 .collect(Collectors.toList());
 
-        String finalSortBy = sortBy;
         Comparator<Room> roomComparator = (o1, o2) -> {
-            switch (finalSortBy) {
+            switch (paginator.getSortBy()) {
                 case "occupancy" : return Integer.compare(o1.getOccupancy(), o2.getOccupancy());
                 case "category" : return Long.compare(o1.getRoomCategory().getId(), o2.getRoomCategory().getId());
                 case "price" :
@@ -100,24 +92,14 @@ public class IndexController extends HttpServlet {
 
         rooms.sort(roomComparator);
 
-        int resultSize = rooms.size();
-
-        int showByCalc = Math.min(showBy, resultSize);
-
-        int start = Math.min((page-1) * showByCalc, resultSize);
-        int end = Math.min(page * showByCalc, resultSize);
-
-        rooms = rooms.subList(start, end);
+        rooms = paginator.generateSublist(rooms);
+        paginator.setRequestAttributes();
 
         req.setAttribute("rooms", rooms);
         req.setAttribute("roomCategories", roomCategories);
         req.setAttribute("nights", nights);
 
-        req.setAttribute("page", page);
-        req.setAttribute("showBy", showBy);
-        req.setAttribute("pages", (int) Math.ceil((double) resultSize / showByCalc));
-        req.setAttribute("resultSize", resultSize);
-        req.setAttribute("indexSortBy", sortBy);
+        req.setAttribute("message", message);
 
         req.getRequestDispatcher("index.jsp").forward(req, resp);
 

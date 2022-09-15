@@ -11,22 +11,13 @@
 
 <html lang="${sessionScope.userSettings.getLocale()}">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title><fmt:message key="index.page-title"/></title>
-    <!-- CSS files -->
-    <link href="./dist/css/tabler.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-flags.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-payments.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-vendors.min.css" rel="stylesheet"/>
-    <link href="./dist/css/demo.min.css" rel="stylesheet"/>
+    <%@ include file="fragments/head.jsp" %>
 </head>
 <body>
 <div class="page">
 
     <!-- Including Page header -->
-    <jsp:include page="header.jsp"/>
+    <jsp:include page="fragments/header.jsp"/>
 
     <div class="page-wrapper">
         <div class="container-xl">
@@ -38,20 +29,18 @@
                             <fmt:message key="my-bookings.my-bookings"/>
                         </h2>
                         <c:if test="${reservations.size() > 0}">
-                        <div class="text-muted mt-1"><fmt:message
-                                key="index.showed"/> ${(page-1) * showBy + 1}-${(page * showBy) > resultSize ? resultSize : page * showBy}
-                            <fmt:message key="index.of"/> ${resultSize} <fmt:message
+                            <div class="text-muted mt-1"><fmt:message
+                                    key="index.showed"/> ${paginator.getShowedStart()}-${paginator.getShowedEnd()}
+                                <fmt:message key="index.of"/> ${paginator.getResultSize()} <fmt:message
                                     key="my-bookings.reservations"/></div>
                         </c:if>
                     </div>
                     <div class="col-2 ">
-                        <select name="showBy" class="form-select" onchange="window.location.href = 'pageAction?showBy=' + this.options[this.selectedIndex].value">
-                            <option value="5"<c:if test="${showBy == 5}"> selected</c:if>><fmt:message
-                                    key="index.show-5"/></option>
-                            <option value="10"<c:if test="${showBy == 10}"> selected</c:if>>
-                                <fmt:message key="index.show-10"/></option>
-                            <option value="20"<c:if test="${showBy == 20}"> selected</c:if>>
-                                <fmt:message key="index.show-20"/></option>
+                        <select name="showBy" class="form-select" onchange="window.location.href = 'pageAction?showBy-${paginator.getPageName()}=' + this.options[this.selectedIndex].value">
+                            <c:forEach items="${paginator.getDefaultShowedItemsCount()}" var="itemCount">
+                                <option value="${itemCount}"<c:if test="${paginator.getShowBy() == itemCount}"> selected</c:if>><fmt:message
+                                        key="index.show-${itemCount}"/></option>
+                            </c:forEach>
                         </select>
                     </div>
                 </div>
@@ -186,8 +175,10 @@
                 </c:forEach>
 
                     <div class="card<c:if test="${reservations.size() == 0}"> visually-hidden</c:if>">
+                        <div class="card-body">
                         <!-- Paginator -->
-                        <jsp:include page="paginator.jsp"/>
+                        <jsp:include page="fragments/paginator.jsp"/>
+                        </div>
                     </div>
 
                     <div class="card<c:if test="${reservations.size() > 0}"> visually-hidden</c:if>">
@@ -226,9 +217,14 @@
                                 <div class="col"><a href="#" class="btn w-100" data-bs-dismiss="modal">
                                     <fmt:message key="my-bookings.dismiss"/>
                                 </a></div>
-                                <div class="col"><a href="#" id="buttonCancel" class="btn btn-danger w-100">
+                                <div class="col">
+                                    <form action="cancelReservationAction" method="post">
+                                        <input type="hidden" name="reservationId" id="reservationIdInput" value="-1">
+                                    <button id="buttonCancel" class="btn btn-danger w-100">
                                     <fmt:message key="my-bookings.cancel-reservation"/>
-                                </a></div>
+                                    </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -296,9 +292,12 @@
                                     </div>
                                 </div>
                                 <div class="mt-2">
-                                    <a href="#" id="buttonPay" class="btn btn-primary w-100">
+                                    <form action="paymentAction" method="post">
+                                        <input type="hidden" name="reservationId" id="reservationIdInput2" value="-1">
+                                    <button id="buttonPay" class="btn btn-primary w-100">
                                         <fmt:message key="my-bookings.pay-now"/>
-                                    </a>
+                                    </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -308,7 +307,7 @@
             </div>
         </div>
 
-        <jsp:include page="footer.jsp"/>
+        <jsp:include page="fragments/footer.jsp"/>
     </div>
 
     <!-- Libs JS -->
@@ -320,11 +319,13 @@
     <script>
 
         document.getElementById('modal-danger').addEventListener('show.bs.modal', function(e) {
-            document.getElementById('buttonCancel').href = "cancelReservationAction?reservationId=" + e.relatedTarget.dataset.id;
+            //document.getElementById('buttonCancel').href = "cancelReservationAction?reservationId=" + e.relatedTarget.dataset.id;
+            document.getElementById('reservationIdInput').value = e.relatedTarget.dataset.id;
         });
 
         document.getElementById('modal-success').addEventListener('show.bs.modal', function(e) {
-            document.getElementById('buttonPay').href = "paymentAction?reservationId=" + e.relatedTarget.dataset.id;
+            //document.getElementById('buttonPay').href = "paymentAction?reservationId=" + e.relatedTarget.dataset.id;
+            document.getElementById('reservationIdInput2').value = e.relatedTarget.dataset.id;
         });
 
     </script>

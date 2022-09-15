@@ -11,22 +11,13 @@
 
 <html lang="${sessionScope.userSettings.getLocale()}">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title><fmt:message key="index.page-title"/></title>
-    <!-- CSS files -->
-    <link href="./dist/css/tabler.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-flags.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-payments.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-vendors.min.css" rel="stylesheet"/>
-    <link href="./dist/css/demo.min.css" rel="stylesheet"/>
+    <%@ include file="fragments/head.jsp" %>
 </head>
 <body>
 <div class="page">
 
     <!-- Including Page header -->
-    <jsp:include page="header.jsp"/>
+    <jsp:include page="fragments/header.jsp"/>
 
     <div class="page-wrapper">
         <div class="container-xl">
@@ -167,28 +158,26 @@
                                         <fmt:message key="index.search-results"/>
                                     </h2>
                                     <div class="text-muted mt-1"><fmt:message
-                                            key="index.showed"/> ${(page-1) * showBy + 1}-${(page * showBy) > resultSize ? resultSize : page * showBy}
-                                        <fmt:message key="index.of"/> ${resultSize} <fmt:message
+                                            key="index.showed"/> ${paginator.getShowedStart()}-${paginator.getShowedEnd()}
+                                        <fmt:message key="index.of"/> ${paginator.getResultSize()} <fmt:message
                                                 key="index.rooms"/></div>
                                 </div>
                                 <div class="col-2 ">
-                                    <select name="sortBy" class="form-select" onchange="window.location.href = 'pageAction?indexSortBy=' + this.options[this.selectedIndex].value">
-                                        <option value="price"<c:if test="${indexSortBy.equals('price')}"> selected</c:if>>
+                                    <select name="sortBy" class="form-select" onchange="window.location.href = 'pageAction?sortBy-${paginator.getPageName()}=' + this.options[this.selectedIndex].value">
+                                        <option value="price"<c:if test="${paginator.getSortBy().equals('price')}"> selected</c:if>>
                                             <fmt:message key="index.sortby-price"/></option>
-                                        <option value="category"<c:if test="${indexSortBy.equals('category')}"> selected</c:if>>
+                                        <option value="category"<c:if test="${paginator.getSortBy().equals('category')}"> selected</c:if>>
                                             <fmt:message key="index.sortby-category"/></option>
-                                        <option value="occupancy"<c:if test="${indexSortBy.equals('occupancy')}"> selected</c:if>>
+                                        <option value="occupancy"<c:if test="${paginator.getSortBy().equals('occupancy')}"> selected</c:if>>
                                             <fmt:message key="index.sortby-occupancy"/></option>
                                     </select>
                                 </div>
                                 <div class="col-2 ">
-                                    <select name="showBy" class="form-select" onchange="window.location.href = 'pageAction?showBy=' + this.options[this.selectedIndex].value">
-                                        <option value="5"<c:if test="${showBy == 5}"> selected</c:if>><fmt:message
-                                                key="index.show-5"/></option>
-                                        <option value="10"<c:if test="${showBy == 10}"> selected</c:if>>
-                                            <fmt:message key="index.show-10"/></option>
-                                        <option value="20"<c:if test="${showBy == 20}"> selected</c:if>>
-                                            <fmt:message key="index.show-20"/></option>
+                                    <select name="showBy" class="form-select" onchange="window.location.href = 'pageAction?showBy-${paginator.getPageName()}=' + this.options[this.selectedIndex].value">
+                                        <c:forEach items="${paginator.getDefaultShowedItemsCount()}" var="itemCount">
+                                            <option value="${itemCount}"<c:if test="${paginator.getShowBy() == itemCount}"> selected</c:if>><fmt:message
+                                                    key="index.show-${itemCount}"/></option>
+                                        </c:forEach>
                                     </select>
                                 </div>
 
@@ -240,11 +229,20 @@
 
                                     <div class="card-footer">
                                         <div class="d-flex">
+
                                             <h3 class="">• <fmt:message
                                                     key="index.occupancy"/>: ${room.getOccupancy()}
                                                 • ${room.getRoomCategory().getName()} •</h3>
-                                            <a href="bookAction?room=${room.getId()}&checkin-date=${param['checkin-date']}&checkout-date=${param['checkout-date']}&persons=${param['persons']}" class="btn btn-primary ms-auto"><fmt:message
-                                                    key="index.book-for"/> ${nights} <fmt:message key="index.nights-for"/> ${room.getPrice() * nights}$</a>
+                                            <div class="card-actions">
+                                                <form action="bookAction" method="post">
+                                                    <input type="hidden" name="room" value="${room.getId()}">
+                                                    <input type="hidden" name="checkin-date" value="${param['checkin-date']}">
+                                                    <input type="hidden" name="checkout-date" value="${param['checkout-date']}">
+                                                    <input type="hidden" name="persons" value="${param['persons']}">
+                                                <button class="btn btn-primary mt-1"><fmt:message key="index.book-for"/> ${nights} <fmt:message key="index.nights-for"/> ${room.getPrice() * nights}$</button>
+                                                </form>
+                                            </div>
+
                                         </div>
                                     </div>
 
@@ -252,8 +250,10 @@
                             </c:forEach>
 
                             <div class="card<c:if test="${rooms.size() == 0}"> visually-hidden</c:if>">
+                                <div class="card-body">
                                 <!-- Paginator -->
-                                <jsp:include page="paginator.jsp"/>
+                                <jsp:include page="fragments/paginator.jsp"/>
+                                </div>
                             </div>
 
                             <div class="card<c:if test="${rooms.size() > 0}"> visually-hidden</c:if>">
@@ -290,13 +290,14 @@
             </div>
 
             <!-- Including Page footer -->
-            <jsp:include page="footer.jsp"/>
+            <jsp:include page="fragments/footer.jsp"/>
 
             <div class="modal modal-blur fade" id="modal-report" tabindex="-1" style="display: none;" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div class="modal-content">
+                        <form action="requestAction" method="post">
                         <div class="modal-header">
-                            <h5 class="modal-title">Reservation request</h5>
+                            <h5 class="modal-title"><fmt:message key="index.reservation-request"/></h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
 
@@ -308,7 +309,7 @@
                                         <label class="form-label"><fmt:message key="index.check-in-date"/></label>
                                         <div class="input-icon mb-2">
                                             <input class="form-control" name="checkin-date"
-                                                   placeholder="<fmt:message key="index.select-date"/>" id="datepicker-start"
+                                                   placeholder="<fmt:message key="index.select-date"/>" id="datepicker-start2"
                                                    value="${param['checkin-date']}" autocomplete="off" required>
                                             <span class="input-icon-addon"><!-- Download SVG icon from http://tabler-icons.io/i/calendar -->
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
@@ -334,7 +335,7 @@
                                         <label class="form-label"><fmt:message key="index.check-out-date"/></label>
                                         <div class="input-icon mb-2">
                                             <input class="form-control" name="checkout-date"
-                                                   placeholder="<fmt:message key="index.select-date"/>" id="datepicker-end"
+                                                   placeholder="<fmt:message key="index.select-date"/>" id="datepicker-end2"
                                                    value="${param['checkout-date']}" autocomplete="off" required>
                                             <span class="input-icon-addon"><!-- Download SVG icon from http://tabler-icons.io/i/calendar -->
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
@@ -355,35 +356,114 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-12">
-                                    <div>
-                                        <label class="form-label">Additional information</label>
-                                        <textarea class="form-control" rows="3" spellcheck="false"></textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <label class="form-label"><fmt:message key="index.number-of-persons"/></label>
+                                    <div class="mb-3">
+                                        <input type="number" name="persons" class="quantity form-control"
+                                               name="example-text-input"
+                                               placeholder="" min="1" name="quantity"
+                                               value="1" required>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <label class="form-label"><fmt:message key="index.number-of-rooms"/></label>
+                                    <div class="mb-3">
+                                        <input type="number" name="rooms" class="quantity form-control"
+                                               name="example-text-input"
+                                               placeholder="" min="1" name="quantity"
+                                               value="1" required>
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="col-lg-12">
+                                <label class="form-label"><fmt:message key="index.room-category"/></label>
+                                <div class="mb-3">
+
+                                    <c:forEach items="${roomCategories}" var="roomCategory" varStatus="roomCategoryStatus">
+
+                                        <label class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="room-category"
+                                                   value="${roomCategory.getId()}">
+                                            <span class="form-check-label">${roomCategory.getName()}</span>
+                                            <span class="form-check-description">${roomCategory.getDescription()}</span>
+                                        </label>
+
+                                    </c:forEach>
+
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div>
+                                    <label class="form-label"><fmt:message key="index.additional-information"/></label>
+                                    <textarea class="form-control" name="additional-information" rows="2" spellcheck="false"></textarea>
+                                </div>
+                            </div>
+
                         </div>
                         <div class="modal-footer">
                             <a href="#" class="btn btn-link link-secondary" data-bs-dismiss="modal">
-                                Cancel
+                                <fmt:message key="index.cancel"/>
                             </a>
-                            <a href="#" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+                            <button type="submit" class="btn btn-primary ms-auto">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                                Send request
-                            </a>
+                                <fmt:message key="index.send-request"/>
+                            </button>
+                        </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+            <c:if test="${message != null}">
+            <div class="modal modal-blur fade" id="modal-success-message" tabindex="-1" >
+                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <div class="modal-status bg-success"></div>
+                        <div class="modal-body text-center py-4">
+                            <!-- Download SVG icon from http://tabler-icons.io/i/circle-check -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-green icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><circle cx="12" cy="12" r="9"></circle><path d="M9 12l2 2l4 -4"></path></svg>
+                            <h3><fmt:message key="index.succeed"/></h3>
+                            <div class="text-muted"><fmt:message key="${message}"/></div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="w-100">
+                                <div class="row">
+                                    <div class="col"><a href="#" class="btn w-100" data-bs-dismiss="modal">
+                                        <fmt:message key="index.close"/>
+                                    </a></div>
+                                    <%--<div class="col"><a href="#" class="btn btn-success w-100" data-bs-dismiss="modal">
+                                        View invoice
+                                    </a></div>--%>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+            </c:if>
+
 
         </div>
     </div>
     <!-- Libs JS -->
     <script src="./dist/js/litepicker.js" defer></script>
+    <script src="./dist/js/jquery-3.6.1.min.js"></script>
     <!-- Tabler Core -->
     <script src="./dist/js/tabler.min.js" defer></script>
     <script src="./dist/js/demo.min.js" defer></script>
-
+    <c:if test="${message != null}">
+    <script type="text/javascript">
+        $(window).on('load', function() {
+            $('#modal-success-message').modal('show');
+        });
+    </script>
+    </c:if>
     <script>
         // @formatter:off
         document.addEventListener("DOMContentLoaded", function () {
@@ -393,9 +473,31 @@
                 singleMode: false,
                 tooltipText: {
                     one: '<fmt:message key="index.night"/>',
-                    two: '<fmt:message key="index.night234"/>',
-                    three: '<fmt:message key="index.night234"/>',
-                    four: '<fmt:message key="index.night234"/>',
+                    other: '<fmt:message key="index.nights"/>'
+                },
+                tooltipNumber: (totalDays) => {
+                    return totalDays - 1;
+                },
+                minDate: Date(),
+                buttonText: {
+                    previousMonth: `
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="15 6 9 12 15 18" /></svg>`,
+                    nextMonth: `
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="9 6 15 12 9 18" /></svg>`,
+                },
+            }));
+        });
+        // @formatter:on
+    </script>
+    <script>
+        // @formatter:off
+        document.addEventListener("DOMContentLoaded", function () {
+            window.Litepicker && (new Litepicker({
+                element: document.getElementById('datepicker-start2'),
+                elementEnd: document.getElementById('datepicker-end2'),
+                singleMode: false,
+                tooltipText: {
+                    one: '<fmt:message key="index.night"/>',
                     other: '<fmt:message key="index.nights"/>'
                 },
                 tooltipNumber: (totalDays) => {

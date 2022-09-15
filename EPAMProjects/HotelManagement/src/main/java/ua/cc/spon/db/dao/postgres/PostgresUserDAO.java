@@ -13,7 +13,9 @@ import java.util.List;
 
 public class PostgresUserDAO implements UserDAO {
 
-    private static final String FIND_ALL_USERS = "SELECT * FROM users";
+    private static final String FIND_ALL_USERS =
+            "SELECT user_id, email, first_name, last_name, created_at, ur.name FROM users u " +
+                    "INNER JOIN user_roles ur USING(role_id)";
     private static final String INSERT_USER = "INSERT INTO users (email, hash_password, first_name, last_name, role_id) " +
             "VALUES(?, crypt(?, gen_salt('bf', 8)), ?, ?, (SELECT role_id FROM user_roles where name = ?))";
     private static final String FIND_USER_BY_EMAIL_PASSWORD = "SELECT user_id, email, hash_password, first_name, last_name, " +
@@ -24,6 +26,12 @@ public class PostgresUserDAO implements UserDAO {
             "user_roles.name FROM users " +
             "INNER JOIN user_roles USING(role_id) " +
             "WHERE user_id = ?";
+    private static final String UPDATE_USER = "UPDATE users SET " +
+            "email = ?, first_name = ?, last_name = ?, " +
+            "role_id = (SELECT role_id FROM user_roles where name = ?), " +
+            "hash_password = " +
+            "(case when ? = (SELECT hash_password from users WHERE user_id = ?) then ? else crypt(?, gen_salt('bf', 8)) end) " +
+            "WHERE user_id = ?";
 
     @Override
     public void insert(User user) throws UserIsAlreadyRegisteredException {
@@ -32,7 +40,7 @@ public class PostgresUserDAO implements UserDAO {
              PreparedStatement statement = con.prepareStatement(INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, user.getEmail());
-            statement.setString(2, user.getHashPassword());
+            statement.setString(2, user.getPassword());
             statement.setString(3, user.getFirstName());
             statement.setString(4, user.getLastName());
             statement.setString(5, user.getRole().toString());
@@ -112,7 +120,7 @@ public class PostgresUserDAO implements UserDAO {
     private void fillUser(User user, ResultSet resultSet) throws SQLException {
         user.setId(resultSet.getLong(1));
         user.setEmail(resultSet.getString(2));
-        user.setHashPassword(resultSet.getString(3));
+        user.setPassword(resultSet.getString(3));
         user.setFirstName(resultSet.getString(4));
         user.setLastName(resultSet.getString(5));
         user.setRole(User.Role.valueOf(resultSet.getString(6)));
@@ -120,7 +128,28 @@ public class PostgresUserDAO implements UserDAO {
 
     @Override
     public void update(User user) {
-        // TODO Auto-generated method stub
+        try (Connection con = DataSource.getConnection();
+             PreparedStatement statement = con.prepareStatement(UPDATE_USER)) {
+
+            statement.setString(1, user.getEmail());
+            statement.setString(2, user.getFirstName());
+            statement.setString(3, user.getLastName());
+            statement.setString(4, user.getRole().toString());
+            statement.setString(5, user.getPassword());
+            statement.setLong(6, user.getId());
+            statement.setString(7, user.getPassword());
+            statement.setString(8, user.getPassword());
+            statement.setLong(9, user.getId());
+
+            int affectedRows = statement.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Updating user failed, no rows affected.");
+            }
+
+        } catch (SQLException e) {
+           throw new RuntimeException(); // TODO: 07.09.2022
+        }
 
     }
 
@@ -144,14 +173,14 @@ public class PostgresUserDAO implements UserDAO {
         }
         return users;
     }
-
     private User extractUser(ResultSet rs) throws SQLException {
         User user = new User();
         user.setId(rs.getInt("user_id"));
         user.setFirstName(rs.getString("first_name"));
         user.setLastName(rs.getString("last_name"));
         user.setEmail(rs.getString("email"));
-        user.setHashPassword(rs.getString("hash_password"));
+        user.setRole(User.Role.valueOf(rs.getString("name")));
+        user.setRegisteredDate(rs.getTimestamp("created_at"));
         return user;
     }
 

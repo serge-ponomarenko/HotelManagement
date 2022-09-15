@@ -17,7 +17,9 @@ public class PostgresStatusDAO implements StatusDAO {
     private static final String FIND_STATUS_NAME =
             "SELECT s.name, s_tr.name " +
                     "FROM statuses s " +
-                    "INNER JOIN statuses_tr s_tr ON s_tr.status_id = s.status_id AND s_tr.locale = ?";
+                    "INNER JOIN statuses_tr s_tr ON s_tr.status_id = s.status_id " +
+                    "INNER JOIN locales l USING(locale_id) " +
+                    "WHERE l.name = ?";
 
     @Override
     public Map<Reservation.Status, String> findNames(String locale) {

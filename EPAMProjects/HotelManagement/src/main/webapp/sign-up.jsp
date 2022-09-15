@@ -2,30 +2,23 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<fmt:setLocale value="${param.locale == null ? 'en' : param.locale}"/>
+<c:set var = "curLocale" value = "${param.locale == null ? 'en' : param.locale}"/>
+
+<fmt:setLocale value="${curLocale}"/>
 <fmt:setBundle basename="Strings"/>
 
 <!doctype html>
-<html lang="${param.locale == null ? 'en' : param.locale}">
+<html lang="${curLocale}">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title><fmt:message key="sign-up.page-title"/></title>
-    <!-- CSS files -->
-    <link href="./dist/css/tabler.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-flags.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-payments.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-vendors.min.css" rel="stylesheet"/>
-    <link href="./dist/css/demo.min.css" rel="stylesheet"/>
+    <%@ include file="fragments/head.jsp" %>
 </head>
 <body class=" border-top-wide border-primary d-flex flex-column">
 <div class="page page-center">
     <div class="container-tight py-4">
         <div class="text-center mb-4">
-            <a href="." class="navbar-brand navbar-brand-autodark"><img src="./static/logo.svg" height="36" alt=""></a>
+            <a href="." class="navbar-brand navbar-brand-autodark"><img src="static/logo.svg" height="36" alt=""></a>
         </div>
-        <form class="card card-md" action="/signUpAction" method="post">
+        <form class="card card-md" action="signUpAction" method="post">
             <div class="card-body">
                 <h2 class="card-title text-center mb-4"><fmt:message key="sign-up.create-new-account"/></h2>
                 <c:if test="${param.msg == 'userAlreadyRegistered'}">
@@ -34,23 +27,21 @@
                 </c:if>
                 <div class="mb-3">
                     <label class="form-label"><fmt:message key="sign-up.select-language"/></label>
+
                     <select type="text" class="form-select" id="select-countries" name="locale" value=""
                             onchange="window.location.href = window.location.pathname + '?locale=' + this.options[this.selectedIndex].value">
-                        <option value="en"
-                                data-custom-properties="&lt;span class=&quot;flag flag-xs flag-country-gb&quot;&gt;&lt;/span&gt;"
-                                <c:if test="${param.locale == 'en'}">
+
+                        <c:forEach items="${locales.values()}" var="locale">
+                        <option value="${locale.getName()}"
+                                data-custom-properties="&lt;span class=&quot;flag flag-xs ${locale.getIconPath()}&quot;&gt;&lt;/span&gt;"
+                                <c:if test="${param.locale == locale.getName()}">
                                     selected
                                 </c:if>
                         >
-                            <fmt:message key="sign-up.english"/>
+                                ${locale.getFullName()}
                         </option>
-                        <option value="uk"
-                                data-custom-properties="&lt;span class=&quot;flag flag-xs flag-country-ua&quot;&gt;&lt;/span&gt;"
-                                <c:if test="${param.locale == 'uk'}">
-                                    selected
-                                </c:if>>
-                            <fmt:message key="sign-up.ukrainian"/>
-                        </option>
+                        </c:forEach>
+
                     </select>
                 </div>
                 <div class="mb-3">
@@ -101,7 +92,7 @@
         </form>
         <div class="text-center text-muted mt-3">
             <fmt:message key="sign-up.already-have-account"/> <a
-                href="./sign-in.jsp?locale=${param.locale == null ? 'en' : param.locale}" tabindex="-1"><fmt:message
+                href="signInAction?locale=${curLocale}" tabindex="-1"><fmt:message
                 key="sign-up.sign-in"/></a>
         </div>
     </div>

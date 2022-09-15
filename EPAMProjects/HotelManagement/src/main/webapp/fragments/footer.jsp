@@ -49,7 +49,7 @@
                         <fmt:message key="footer.all-rights-reserved"/>
                     </li>
                     <li class="list-inline-item">
-                        <a href="." class="link-secondary" rel="noopener">
+                        <a href=".." class="link-secondary" rel="noopener">
                             v1.0.0
                         </a>
                     </li>

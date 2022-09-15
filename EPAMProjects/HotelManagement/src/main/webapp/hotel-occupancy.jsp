@@ -11,22 +11,13 @@
 
 <html lang="${sessionScope.userSettings.getLocale()}">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title><fmt:message key="index.page-title"/></title>
-    <!-- CSS files -->
-    <link href="./dist/css/tabler.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-flags.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-payments.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-vendors.min.css" rel="stylesheet"/>
-    <link href="./dist/css/demo.min.css" rel="stylesheet"/>
+    <%@ include file="fragments/head.jsp" %>
 </head>
 <body>
 <div class="page">
 
     <!-- Including Page header -->
-    <jsp:include page="header.jsp"/>
+    <jsp:include page="fragments/header.jsp"/>
 
     <div class="page-wrapper">
         <div class="container-xl">
@@ -78,7 +69,7 @@
 
 
 
-        <jsp:include page="footer.jsp"/>
+        <jsp:include page="fragments/footer.jsp"/>
     </div>
 
     <!-- Libs JS -->
@@ -121,8 +112,7 @@
                     bar: {
                         horizontal: true,
                         barHeight: '80%',
-                        rangeBarGroupRows: true,
-                        distributed: true
+                        rangeBarGroupRows: true
                     }
                 },
                 xaxis: {

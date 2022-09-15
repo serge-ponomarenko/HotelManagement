@@ -13,7 +13,6 @@ public class EncodingFilter implements Filter {
         String encoding = "UTF-8";
         request.setCharacterEncoding(encoding);
         response.setCharacterEncoding(encoding);
-        //response.setContentType(contentType);
         chain.doFilter(request, response);
     }
 

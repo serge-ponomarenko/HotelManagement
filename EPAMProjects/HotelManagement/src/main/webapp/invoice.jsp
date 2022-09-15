@@ -11,41 +11,35 @@
 
 <html lang="${sessionScope.userSettings.getLocale()}">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title><fmt:message key="index.page-title"/></title>
-    <!-- CSS files -->
-    <link href="./dist/css/tabler.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-flags.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-payments.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-vendors.min.css" rel="stylesheet"/>
-    <link href="./dist/css/demo.min.css" rel="stylesheet"/>
+    <%@ include file="fragments/head.jsp" %>
 </head>
 <body>
 <div class="page">
 
     <!-- Including Page header -->
-    <jsp:include page="header.jsp"/>
+    <jsp:include page="fragments/header.jsp"/>
 
     <div class="page-wrapper">
         <div class="container-xl">
             <!-- Page title -->
             <div class="page-header d-print-none">
                 <div class="row g-2 align-items-center">
-                    <div class="col">
+                    <div class="col-8">
                         <h2 class="page-title">
                             <fmt:message key="invoice.invoice"/>
                         </h2>
                     </div>
                     <!-- Page title actions -->
-                    <div class="col-12 col-md-auto ms-auto d-print-none">
+                    <div class="col-2 d-print-none">
                         <button type="button" class="btn btn-primary" onclick="javascript:window.print();">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" /><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" /><rect x="7" y="13" width="10" height="8" rx="2" /></svg>
                             <fmt:message key="invoice.print-invoice"/>
                         </button>
                     </div>
-                    <a href="paymentAction?reservationId=${reservation.getId()}" class="col-12 col-md-auto ms-auto d-print-none btn btn-primary">
+                    <div class="col-2 d-print-none">
+                    <form action="paymentAction" method="post">
+                        <input type="hidden" name="reservationId" value="${reservation.getId()}">
+                    <button class="d-print-none btn btn-primary">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-coin" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                             <circle cx="12" cy="12" r="9"></circle>
@@ -53,7 +47,9 @@
                             <path d="M12 7v10"></path>
                         </svg>
                         <fmt:message key="invoice.report-payment"/>
-                    </a>
+                    </button>
+                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -135,7 +131,7 @@
                 </div>
             </div>
             <!-- Including Page footer -->
-            <jsp:include page="footer.jsp"/>
+            <jsp:include page="fragments/footer.jsp"/>
 
         </div>
     </div>

@@ -4,8 +4,6 @@ package ua.cc.spon.db.dao.postgres;
 import ua.cc.spon.db.dao.*;
 
 public class PostgresDAOFactory extends DAOFactory {
-
-
 	@Override
 	public UserDAO getUserDAO() {
 		return new PostgresUserDAO();
@@ -26,7 +24,17 @@ public class PostgresDAOFactory extends DAOFactory {
 	public ReservationDAO getReservationDAO() {
 		return new PostgresReservationDAO();
 	}
+	@Override
 	public StatusDAO getStatusDAO() {
 		return new PostgresStatusDAO();
+	}
+	@Override
+	public RequestDAO getRequestDAO() {
+		return new PostgresRequestDAO();
+	}
+
+	@Override
+	public LocaleDAO getLocaleDAO() {
+		return new PostgresLocaleDAO();
 	}
 }

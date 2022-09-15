@@ -2,22 +2,15 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<fmt:setLocale value="${param.locale == null ? 'en' : param.locale}"/>
+<c:set var = "curLocale" value = "${param.locale == null ? 'en' : param.locale}"/>
+
+<fmt:setLocale value="${curLocale}"/>
 <fmt:setBundle basename="Strings"/>
 
 <!doctype html>
-<html lang="${param.locale == null ? 'en' : param.locale}">
+<html lang="${curLocale}">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title><fmt:message key="sign-in.page-title"/></title>
-    <!-- CSS files -->
-    <link href="./dist/css/tabler.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-flags.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-payments.min.css" rel="stylesheet"/>
-    <link href="./dist/css/tabler-vendors.min.css" rel="stylesheet"/>
-    <link href="./dist/css/demo.min.css" rel="stylesheet"/>
+    <%@ include file="fragments/head.jsp" %>
 </head>
 <body class=" border-top-wide border-primary d-flex flex-column">
 <div class="page page-center">
@@ -25,20 +18,26 @@
         <div class="text-center mb-4">
             <a href="." class="navbar-brand navbar-brand-autodark"><img src="./static/logo.svg" height="36" alt=""></a>
         </div>
-        <form class="card card-md" action="/signInAction" method="post" autocomplete="off">
+        <form class="card card-md" action="signInAction" method="post" autocomplete="off">
             <div class="card-body">
                 <div class="row g-2 align-items-center">
                     <div class="col col-md-auto ms-auto">
                         <h2 class="text-center"><fmt:message key="sign-in.login-to-your-account"/></h2>
                     </div>
                     <!-- Page title actions -->
+
                     <div class="col-12 col-md-auto ms-auto d-print-none">
-                        <a href="?locale=en" class="d-none d-sm-inline-block">
-                            <span class="flag flag-country-gb"></span>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown"
+                           aria-label="Language">
+                                    <span class="flag ${locales.get(curLocale).getIconPath()}"></span>
                         </a>
-                        <a href="?locale=uk" class="d-none d-sm-inline-block">
-                            <span class="flag flag-country-ua"></span>
-                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                            <c:forEach items="${locales.values()}" var="locale">
+                                <a href="signInAction?locale=${locale.getName()}" class="dropdown-item"><span class="flag ${locale.getIconPath()}"></span>&nbsp;${locale.getFullName()}</a>
+                            </c:forEach>
+                        </div>
+                    </div>
                     </div>
                 </div>
                 <c:if test="${param.msg == 'noUserFound'}">
@@ -94,14 +93,14 @@
         </form>
         <div class="text-center text-muted mt-3">
             <fmt:message key="sign-in.dont-have-account"/> <a
-                href="./sign-up.jsp?locale=${param.locale == null ? 'en' : param.locale}" tabindex="-1"><fmt:message
+                href="signUpAction?locale=${curLocale}" tabindex="-1"><fmt:message
                 key="sign-in.sign-up"/></a>
         </div>
     </div>
 </div>
 <!-- Libs JS -->
 <!-- Tabler Core -->
-<script src="./dist/js/tabler.min.js" defer></script>
-<script src="./dist/js/demo.min.js" defer></script>
+<script src="dist/js/tabler.min.js" defer></script>
+<script src="dist/js/demo.min.js" defer></script>
 </body>
 </html>

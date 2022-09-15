@@ -12,6 +12,7 @@ import ua.cc.spon.db.dao.StatusDAO;
 import ua.cc.spon.db.entity.Reservation;
 import ua.cc.spon.db.entity.User;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.service.PaginatorService;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -20,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @WebServlet({"/myBookingsAction"})
-public class MyBookingsController extends HttpServlet {
+public class BookingsListController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -36,37 +37,18 @@ public class MyBookingsController extends HttpServlet {
 
         Map<Reservation.Status, String> statusesTranslated = statusDAO.findNames(locale);
 
-        int page = 1;
-        if (req.getSession().getAttribute("page") != null) {
-            page = (int) req.getSession().getAttribute("page");
-        }
-
-        int showBy = 5;
-        if (req.getSession().getAttribute("showBy") != null) {
-            showBy = (int) req.getSession().getAttribute("showBy");
-        }
+        PaginatorService paginator =
+                new PaginatorService(req, "myBookings", new Integer[]{5, 10, 20});
 
         List<Reservation> reservations = reservationDAO.findByUser(user, locale);
 
         reservations.sort(Comparator.comparingLong(Reservation::getId).reversed()); // TODO: 30.08.2022 Sorting!
 
-        int resultSize = reservations.size();
-
-        int showByCalc = Math.min(showBy, resultSize);
-
-        int start = Math.min((page-1) * showByCalc, resultSize);
-        int end = Math.min(page * showByCalc, resultSize);
-
-        reservations = reservations.subList(start, end);
-
+        reservations = paginator.generateSublist(reservations);
+        paginator.setRequestAttributes();
 
         req.setAttribute("reservations", reservations);
         req.setAttribute("statusesTranslated", statusesTranslated);
-
-        req.setAttribute("page", page);
-        req.setAttribute("showBy", showBy);
-        req.setAttribute("pages", (int) Math.ceil((double) resultSize / showByCalc));
-        req.setAttribute("resultSize", resultSize);
 
         req.getRequestDispatcher("my-bookings.jsp").forward(req, resp);
 

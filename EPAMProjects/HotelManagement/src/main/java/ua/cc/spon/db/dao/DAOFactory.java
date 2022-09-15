@@ -42,6 +42,8 @@ public abstract class DAOFactory {
 	public abstract RoomCategoryDAO getRoomCategoryDAO();
 	public abstract ReservationDAO getReservationDAO();
 	public abstract StatusDAO getStatusDAO();
+	public abstract RequestDAO getRequestDAO();
+	public abstract LocaleDAO getLocaleDAO();
 
 
 }

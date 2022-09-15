@@ -20,7 +20,7 @@ import java.util.Optional;
 public class CancelReservationController extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         ServletContext context = req.getServletContext();
         DAOFactory factory = (DAOFactory) context.getAttribute("DAOFactory");
@@ -38,7 +38,6 @@ public class CancelReservationController extends HttpServlet {
         reservation.setStatus(Reservation.Status.CANCELED);
         reservationDAO.updateStatus(reservation);
 
-        //req.getRequestDispatcher("index.jsp").forward(req, resp);
         resp.sendRedirect("myBookingsAction");
 
     }

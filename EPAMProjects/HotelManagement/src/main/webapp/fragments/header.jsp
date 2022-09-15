@@ -1,7 +1,10 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
 <fmt:setLocale value="${sessionScope.userSettings.getLocale()}"/>
 <fmt:setBundle basename="Strings"/>
+
 <header class="navbar navbar-expand-md navbar-light d-print-none">
     <div class="container-xl">
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu">
@@ -9,7 +12,7 @@
         </button>
         <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
             <a href=".">
-                <img src="./static/logo.svg" width="110" height="32" alt="Hotel" class="navbar-brand-image">
+                <img src="static/logo.svg" width="110" height="32" alt="Hotel" class="navbar-brand-image">
             </a>
         </h1>
 
@@ -19,7 +22,7 @@
         <div class="navbar-nav flex-row order-md-last">
             <div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center me-3">
                 <ul class="navbar-nav">
-
+                    <c:if test="${user.getRole().toString().equals('ADMINISTRATOR') or user.getRole().toString().equals('MANAGER')}">
                     <li class="nav-item active dropdown">
                         <a class="nav-link dropdown-toggle" href="#navbar-layout" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                     <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/layout-2 -->
@@ -47,31 +50,30 @@
                             <div class="dropdown-menu-columns">
                                 <div class="dropdown-menu-column">
                                     <a class="dropdown-item" href="hotelOccupancyAction">
-                                        Hotel Occupancy
+                                        <fmt:message key="header.hotel-occupancy"/>
                                     </a>
-                                    <a class="dropdown-item" href="./layout-boxed.html">
-                                        Boxed
-                                        <span class="badge badge-sm bg-green text-uppercase ms-2">New</span>
+                                    <a class="dropdown-item" href="reservationRequestsAction">
+                                        <fmt:message key="header.pending-reservation-requests"/>
+                                        <span class="badge badge-sm bg-red">2</span>
                                     </a>
-                                    <a class="dropdown-item" href="./layout-vertical.html">
-                                        Vertical
+                                    <c:if test="${user.getRole().toString().equals('ADMINISTRATOR')}">
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="manageUsersAction">
+                                        <fmt:message key="header.manage-users"/>
                                     </a>
-                                    <a class="dropdown-item" href="./layout-vertical-transparent.html">
-                                        Vertical transparent
+                                    <a class="dropdown-item" href="manageCategoriesAction">
+                                        <fmt:message key="header.manage-categories"/>
                                     </a>
-                                    <a class="dropdown-item" href="./layout-vertical-right.html">
-                                        Right vertical
+                                    <a class="dropdown-item" href="manageRoomsAction">
+                                        <fmt:message key="header.manage-rooms"/>
                                     </a>
-                                    <a class="dropdown-item active" href="./layout-condensed.html">
-                                        Condensed
-                                    </a>
-                                    <a class="dropdown-item" href="./layout-combo.html">
-                                        Combined
-                                    </a>
+                                    </c:if>
                                 </div>
                             </div>
                         </div>
                     </li>
+                    </c:if>
+
                     <li class="nav-item">
                         <a class="nav-link" href="myBookingsAction">
                     <span class="nav-link-icon d-md-none d-lg-inline-block"><!-- Download SVG icon from http://tabler-icons.io/i/ghost -->
@@ -93,13 +95,17 @@
             </div>
 
 
-            <div class="nav-item d-none d-md-flex me-3">
-                <a href="localeAction?locale=en" class="d-none d-sm-inline-block">
-                    <span class="flag flag-country-gb"></span>
+            <div class="nav-item dropdown">
+                <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown"
+                   aria-label="Language">
+                            <span class="flag ${locales.get(sessionScope.userSettings.getLocale()).getIconPath()}"></span>
                 </a>
-                <a href="localeAction?locale=uk" class="d-none d-sm-inline-block">
-                    <span class="flag flag-country-ua"></span>
-                </a>
+
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                    <c:forEach items="${locales.values()}" var="locale">
+                        <a href="localeAction?locale=${locale.getName()}" class="dropdown-item"><span class="flag ${locale.getIconPath()}"></span>&nbsp;${locale.getFullName()}</a>
+                    </c:forEach>
+                </div>
             </div>
 
             <div class="d-none d-md-flex me-3">
@@ -130,18 +136,18 @@
             <div class="nav-item dropdown">
                 <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown"
                    aria-label="Open user menu">
-                    <span class="avatar avatar-sm" style="background-image: url(./static/000.webp)"></span>
+                    <span class="avatar avatar-sm" style="background-image: url(static/000.webp)"></span>
                     <div class="d-none d-xl-block ps-2">
                         <div>${sessionScope.user.getFirstName()} ${sessionScope.user.getLastName()}</div>
                         <div class="mt-1 small text-muted">${sessionScope.user.getRole().toString().substring(0,1).toUpperCase()}${sessionScope.user.getRole().toString().substring(1).toLowerCase()}</div>
                     </div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                    <a href="#" class="dropdown-item"><fmt:message key="header.profile-account"/></a>
+                    <a href="editUserAction?user_id=${user.getId()}" class="dropdown-item"><fmt:message key="header.profile-account"/></a>
                     <a href="myBookingsAction" class="dropdown-item"><fmt:message key="header.my-bookings"/></a>
                     <div class="dropdown-divider"></div>
                     <a href="#" class="dropdown-item"><fmt:message key="header.settings"/></a>
-                    <a href="/logoutAction" class="dropdown-item"><fmt:message key="header.logout"/></a>
+                    <a href="logoutAction" class="dropdown-item"><fmt:message key="header.logout"/></a>
                 </div>
             </div>
         </div>
