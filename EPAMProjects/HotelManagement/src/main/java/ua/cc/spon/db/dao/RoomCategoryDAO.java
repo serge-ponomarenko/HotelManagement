@@ -1,6 +1,7 @@
 package ua.cc.spon.db.dao;
 
 import ua.cc.spon.db.entity.RoomCategory;
+import ua.cc.spon.exception.DBException;
 
 import java.util.List;
 import java.util.Map;
@@ -16,5 +17,5 @@ public interface RoomCategoryDAO {
 
 	void create(RoomCategory roomCategory);
 
-	void deleteById(long categoryId);
+	void deleteById(long categoryId) throws DBException;
 }

@@ -2,10 +2,12 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
+<%@ taglib prefix="myTags" tagdir="/WEB-INF/tags" %>
+
 <fmt:setLocale value="${sessionScope.userSettings.getLocale()}"/>
 <fmt:setBundle basename="Strings"/>
 
-<% if (request.getAttribute("options") == null) response.sendRedirect("indexAction"); %>
+<c:if test="${options == null}"><jsp:forward page="indexAction" /></c:if>
 
 <!doctype html>
 
@@ -150,9 +152,11 @@
             </div>
         </div>
 
-
-
         <jsp:include page="fragments/footer.jsp"/>
+
+        <myTags:success_message message="${success_message}" />
+        <myTags:fail_message message="${fail_message}" />
+
     </div>
 
     <!-- Libs JS -->

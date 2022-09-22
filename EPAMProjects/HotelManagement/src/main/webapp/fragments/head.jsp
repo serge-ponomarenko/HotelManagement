@@ -10,3 +10,5 @@
 <link href="dist/css/demo.min.css" rel="stylesheet"/>
 
 <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+<script src="dist/js/jquery-3.6.1.min.js"></script>

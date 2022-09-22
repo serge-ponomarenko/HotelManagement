@@ -2,10 +2,12 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
+<%@ taglib prefix="myTags" tagdir="/WEB-INF/tags" %>
+
 <fmt:setLocale value="${sessionScope.userSettings.getLocale()}"/>
 <fmt:setBundle basename="Strings"/>
 
-<% if (request.getAttribute("requests") == null) response.sendRedirect("indexAction"); %>
+<c:if test="${requests == null}"><jsp:forward page="indexAction" /></c:if>
 
 <!doctype html>
 
@@ -61,6 +63,10 @@
                             <a href="proceedRequestAction?request_id=${curRequest.getId()}" class="btn btn-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M5.931 6.936l1.275 4.249m5.607 5.609l4.251 1.275"></path><path d="M11.683 12.317l5.759 -5.759"></path><circle cx="5.5" cy="5.5" r="1.5"></circle><circle cx="18.5" cy="5.5" r="1.5"></circle><circle cx="18.5" cy="18.5" r="1.5"></circle><circle cx="8.5" cy="15.5" r="4.5"></circle></svg>
                                 <fmt:message key="requests.proceed"/>
+                            </a>
+                            <a href="proceedRequestAction?request_id=${curRequest.getId()}&action=delete" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><line x1="4" y1="7" x2="20" y2="7"></line><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path></svg>
+                                <fmt:message key="requests.delete"/>
                             </a>
 
                         </div>
@@ -140,6 +146,9 @@
 
 
         <jsp:include page="fragments/footer.jsp"/>
+
+        <myTags:success_message message="${success_message}" />
+        <myTags:fail_message message="${fail_message}" />
     </div>
 
     <!-- Libs JS -->

@@ -2,11 +2,12 @@ package ua.cc.spon.db.entity;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 
 @Data
-public class Request {
+public class Request implements Entity, Serializable {
 
     private long id;
     private LocalDate checkinDate;

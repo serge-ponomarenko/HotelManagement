@@ -11,6 +11,9 @@ import ua.cc.spon.db.dao.ReservationDAO;
 import ua.cc.spon.db.entity.Reservation;
 import ua.cc.spon.db.entity.User;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.exception.DBException;
+import ua.cc.spon.service.RequestParametersValidatorService;
+import ua.cc.spon.util.HotelHelper;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,13 +33,31 @@ public class InvoiceController extends HttpServlet {
         String locale = ((UserSettings) req.getSession().getAttribute("userSettings")).getLocale();
         User user = ((User) req.getSession().getAttribute("user"));
 
-        long reservationId = Long.parseLong(Optional.ofNullable(req.getParameter("id")).orElse("-1"));
+        RequestParametersValidatorService validator = new RequestParametersValidatorService(req);
 
-        List<Reservation> reservations = reservationDAO.findByUser(user, locale);
+        long reservationId;
+        Reservation reservation;
 
-        Reservation reservation = reservations.stream().filter(r -> r.getId() == reservationId).findAny().orElseThrow();
+        try {
+            reservationId = validator.validateAndGetLong("reservationId", new IllegalArgumentException());
+
+            List<Reservation> reservations = reservationDAO.findByUser(user, locale);
+
+            reservation = reservations
+                    .stream()
+                    .filter(r -> r.getId() == reservationId)
+                    .findAny()
+                    .orElseThrow(IllegalArgumentException::new);
+
+        } catch (IllegalArgumentException | DBException e) {
+            req.getSession().setAttribute("fail_message", "error.invalidParameters");
+            resp.sendRedirect("myBookingsAction");
+            return;
+        }
 
         req.setAttribute("reservation", reservation);
+
+        HotelHelper.proceedMessages(req);
 
         req.getRequestDispatcher("invoice.jsp").forward(req, resp);
 

@@ -7,6 +7,7 @@ import ua.cc.spon.db.dao.RoomDAO;
 import ua.cc.spon.db.entity.Locale;
 import ua.cc.spon.db.entity.Room;
 import ua.cc.spon.db.entity.RoomCategory;
+import ua.cc.spon.exception.DBException;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -25,6 +26,18 @@ public class PostgresRoomDAO implements RoomDAO {
                     "JOIN reservations_rooms rr on rs.room_id = rr.room_id " +
                     "JOIN reservations r on rr.reservation_id = r.reservation_id " +
                     "WHERE (status_id NOT IN (1, 6, 7)) AND NOT (?::date >= checkout_date OR ?::date <= checkin_date))";
+
+    private static final String FIND_ROOMS_WITHOUT_RESERVATION =
+            "SELECT r.room_id, number, occupancy, r.category_id, r_tr.name, r_tr.description, price, r.created_at " +
+                    "FROM rooms r " +
+                    "INNER JOIN categories c USING(category_id) " +
+                    "INNER JOIN rooms_tr r_tr ON r.room_id = r_tr.room_id " +
+                    "INNER JOIN locales l USING(locale_id) " +
+                    "WHERE l.name = ? AND r.room_id NOT IN " +
+                    "(SELECT rs.room_id FROM rooms rs " +
+                    "JOIN reservations_rooms rr on rs.room_id = rr.room_id " +
+                    "JOIN reservations r on rr.reservation_id = r.reservation_id " +
+                    "WHERE (status_id != 1))";
 
     private static final String FIND_ALL_ROOMS =
             "SELECT r.room_id, number, occupancy, r.category_id, r_tr.name, r_tr.description, price, r.created_at " +
@@ -71,7 +84,7 @@ public class PostgresRoomDAO implements RoomDAO {
             "WHERE room_id = ? AND rooms_tr.locale_id = (SELECT locales.locale_id FROM locales WHERE locales.name = ?)";
 
     @Override
-    public void update(Room room, String locale) {
+    public void update(Room room, String locale) throws DBException {
         try (Connection con = DataSource.getConnection();
              PreparedStatement statement1 = con.prepareStatement(UPDATE_ROOM);
              PreparedStatement statement2 = con.prepareStatement(UPDATE_ROOM_TR)) {
@@ -100,7 +113,7 @@ public class PostgresRoomDAO implements RoomDAO {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException(); // TODO: 07.09.2022
+            throw new DBException(e);
         }
 
     }
@@ -142,7 +155,7 @@ public class PostgresRoomDAO implements RoomDAO {
     }
 
     @Override
-    public void deleteById(long roomId) {
+    public void deleteById(long roomId) throws DBException {
         try (Connection con = DataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(DELETE_BY_ID)) {
 
@@ -155,7 +168,7 @@ public class PostgresRoomDAO implements RoomDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DBException(e);
         }
     }
 
@@ -234,11 +247,43 @@ public class PostgresRoomDAO implements RoomDAO {
     }
 
     @Override
-    public List<Room> findFreeRooms(LocalDate checkin, LocalDate checkout, String locale) {
+    public List<Room> findRoomsWithoutReservation(String locale) {
         List<Room> result = new ArrayList<>();
 
         try (Connection con = DataSource.getConnection();
-             PreparedStatement statement = con.prepareStatement(FIND_FREE_ROOMS)) {
+             PreparedStatement statement = con.prepareStatement(FIND_ROOMS_WITHOUT_RESERVATION)) {
+
+                statement.setString(1, locale);
+
+                fillRooms(result, statement, locale);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<Room> findFreeRooms(LocalDate checkin, LocalDate checkout, String locale) {
+        List<Room> result = new ArrayList<>();
+
+        try (Connection con = DataSource.getConnection()) {
+
+           result = findFreeRooms(con, checkin, checkout, locale);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<Room> findFreeRooms(Connection con, LocalDate checkin, LocalDate checkout, String locale) {
+        List<Room> result = new ArrayList<>();
+
+        try (PreparedStatement statement = con.prepareStatement(FIND_FREE_ROOMS)) {
 
             statement.setString(1, locale);
             statement.setString(2, checkin.toString());
@@ -252,7 +297,6 @@ public class PostgresRoomDAO implements RoomDAO {
 
         return result;
     }
-
 
     @Override
     public List<Room> findALL(String locale) {

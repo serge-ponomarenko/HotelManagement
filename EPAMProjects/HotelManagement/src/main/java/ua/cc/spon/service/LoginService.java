@@ -10,12 +10,13 @@ import ua.cc.spon.db.dao.LocaleDAO;
 import ua.cc.spon.db.dao.UserSettingsDAO;
 import ua.cc.spon.db.entity.User;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.exception.DBException;
 
 import java.util.concurrent.TimeUnit;
 
 public class LoginService {
 
-    public static void initializeSession(HttpServletRequest req, HttpServletResponse resp, User user, boolean remember) {
+    public static void initializeSession(HttpServletRequest req, HttpServletResponse resp, User user, boolean remember) throws DBException {
 
         ServletContext context = req.getServletContext();
         DAOFactory factory = (DAOFactory) context.getAttribute("DAOFactory");

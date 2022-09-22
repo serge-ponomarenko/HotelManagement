@@ -2,7 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<c:set var = "curLocale" value = "${param.locale == null ? 'en' : param.locale}"/>
+<c:set var="curLocale" value="${param.locale == null ? 'en' : param.locale}"/>
 
 <fmt:setLocale value="${curLocale}"/>
 <fmt:setBundle basename="Strings"/>
@@ -27,30 +27,38 @@
                     <!-- Page title actions -->
 
                     <div class="col-12 col-md-auto ms-auto d-print-none">
-                    <div class="nav-item dropdown">
-                        <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown"
-                           aria-label="Language">
-                                    <span class="flag ${locales.get(curLocale).getIconPath()}"></span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                            <c:forEach items="${locales.values()}" var="locale">
-                                <a href="signInAction?locale=${locale.getName()}" class="dropdown-item"><span class="flag ${locale.getIconPath()}"></span>&nbsp;${locale.getFullName()}</a>
-                            </c:forEach>
+                        <div class="nav-item dropdown">
+                            <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown"
+                               aria-label="Language">
+                                <span class="flag ${locales.get(curLocale).getIconPath()}"></span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                <c:forEach items="${locales.values()}" var="locale">
+                                    <a href="signInAction?locale=${locale.getName()}" class="dropdown-item"><span
+                                            class="flag ${locale.getIconPath()}"></span>&nbsp;${locale.getFullName()}
+                                    </a>
+                                </c:forEach>
+                            </div>
                         </div>
                     </div>
-                    </div>
                 </div>
-                <c:if test="${param.msg == 'noUserFound'}">
+
+                <c:if test="${not empty param.msg}">
                     <h3 class="card-title text-center bg-red-lt mb-4"><fmt:message
-                            key="sign-in.user-is-not-registered"/></h3>
+                            key="error.${param.msg}"/></h3>
                 </c:if>
-                <c:if test="${param.msg == 'wrongPassword'}">
-                    <h3 class="card-title text-center bg-red-lt mb-4"><fmt:message
-                            key="sign-in.password-incorrect"/></h3>
-                </c:if>
+
+                <div class="text-center bg-teal-lt col col-md-auto ms-auto">
+                    Login as: <a href="#" id="ladmin">Admin</a> •
+                    <a href="#" id="lmanager">Manager</a> •
+                    <a href="#" id="luser1">User1</a> •
+                    <a href="#" id="luser2">User2</a> •
+                    <a href="#" id="luser3">User3</a> •
+                </div>
+
                 <div class="mb-3">
                     <label class="form-label"><fmt:message key="sign-in.email-address"/></label>
-                    <input type="email" name="email" class="form-control"
+                    <input type="email" id="email" name="email" class="form-control"
                            placeholder="<fmt:message key="sign-in.enter-email"/>" autocomplete="off"
                     <c:if test="${param.msg == 'wrongPassword'}">
                            value="${param.email}"
@@ -65,21 +73,18 @@
                 </span>
                     </label>
                     <div class="input-group input-group-flat">
-                        <input type="password" name="password" class="form-control"
+                        <input id="password" type="password" name="password" class="form-control"
                                placeholder="<fmt:message key="sign-in.enter-password"/>"
                                autocomplete="off" required>
                         <span class="input-group-text">
-                  <a href="#" class="link-secondary" title="Show password" data-bs-toggle="tooltip">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
-                         stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
-                         stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12"
-                                                                                                            cy="12"
-                                                                                                            r="2"/><path
-                            d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7"/></svg>
+                  <a class="link-secondary" title="Show password" onclick="myFunction()" data-bs-toggle="tooltip">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="2"/><path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7"/></svg>
                   </a>
                 </span>
                     </div>
                 </div>
+                <small class="form-hint mb-2"><fmt:message key="sing-in.minimum-eight-characters"/></small>
+
                 <div class="mb-2">
                     <label class="form-check">
                         <input type="checkbox" name="remember" class="form-check-input"/>
@@ -102,5 +107,47 @@
 <!-- Tabler Core -->
 <script src="dist/js/tabler.min.js" defer></script>
 <script src="dist/js/demo.min.js" defer></script>
+<script>
+    function myFunction() {
+        var x = document.getElementById("password");
+        if (x.type === "password") {
+            x.type = "text";
+        } else {
+            x.type = "password";
+        }
+    }
+</script>
+<script>
+    $(function () {
+        $('#ladmin').click(function () {
+            $("#email").val("s.stefaniv@gmail.com");
+            $("#password").val("qwertyuiop123");
+        });
+    });
+    $(function () {
+        $('#lmanager').click(function () {
+            $("#email").val("gen.justice@gmail.com");
+            $("#password").val("qwertyuiop123");
+        });
+    });
+    $(function () {
+        $('#luser1').click(function () {
+            $("#email").val("corbett@gmail.com");
+            $("#password").val("qwertyuiop123");
+        });
+    });
+    $(function () {
+        $('#luser2').click(function () {
+            $("#email").val("f.seymour@gmail.com");
+            $("#password").val("qwertyuiop123");
+        });
+    });
+    $(function () {
+        $('#luser3').click(function () {
+            $("#email").val("a.simons@gmail.com");
+            $("#password").val("qwertyuiop123");
+        });
+    });
+</script>
 </body>
 </html>

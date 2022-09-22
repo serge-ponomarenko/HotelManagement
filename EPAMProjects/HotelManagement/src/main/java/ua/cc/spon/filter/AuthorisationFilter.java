@@ -13,15 +13,14 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import static java.util.Arrays.*;
+import static java.util.Arrays.asList;
 import static ua.cc.spon.db.entity.User.Role.*;
 
 @WebFilter(filterName = "/AuthorisationFilter", urlPatterns = {"/*"})
 public class AuthorisationFilter implements Filter {
 
-
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final Map<String, List<User.Role>> actionsMap = new HashMap<>();
     static {
@@ -49,6 +48,8 @@ public class AuthorisationFilter implements Filter {
         actionsMap.put("proceedRequestAction",              asList(ADMINISTRATOR, MANAGER));
         actionsMap.put("makeReservationFromRequestAction",  asList(ADMINISTRATOR, MANAGER));
         actionsMap.put("hotelOccupancyAction",              asList(ADMINISTRATOR, MANAGER));
+        actionsMap.put("allBookingsAction",                 asList(ADMINISTRATOR, MANAGER));
+        actionsMap.put("setMaintenanceAction",              asList(ADMINISTRATOR, MANAGER));
 
         actionsMap.put("manageUsersAction",                 asList(ADMINISTRATOR));
         actionsMap.put("editUserAction",                    asList(ADMINISTRATOR, MANAGER, USER));
@@ -56,7 +57,7 @@ public class AuthorisationFilter implements Filter {
         actionsMap.put("editCategoryAction",                asList(ADMINISTRATOR));
         actionsMap.put("manageRoomsAction",                 asList(ADMINISTRATOR));
         actionsMap.put("editRoomAction",                    asList(ADMINISTRATOR));
-        actionsMap.put("FileUploadServlet",                    asList(ADMINISTRATOR));
+        actionsMap.put("FileUploadServlet",                 asList(ADMINISTRATOR));
     }
 
 
@@ -78,8 +79,7 @@ public class AuthorisationFilter implements Filter {
             List<User.Role> allowedRoles = actionsMap.get(uri);
 
             if (allowedRoles == null) {
-                Logger logger = LoggerFactory.getLogger(this.getClass());
-                logger.warn(uri + " - allowed roles not assigned!");
+                logger.warn("{} - allowed roles not assigned!", uri);
             }
 
             if (allowedRoles == null || !allowedRoles.contains(user.getRole())) {

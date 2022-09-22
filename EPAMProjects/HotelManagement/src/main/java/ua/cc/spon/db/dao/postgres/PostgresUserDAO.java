@@ -3,6 +3,7 @@ package ua.cc.spon.db.dao.postgres;
 import ua.cc.spon.db.DataSource;
 import ua.cc.spon.db.dao.UserDAO;
 import ua.cc.spon.db.entity.User;
+import ua.cc.spon.exception.DBException;
 import ua.cc.spon.exception.IllegalPasswordException;
 import ua.cc.spon.exception.NoUserFoundException;
 import ua.cc.spon.exception.UserIsAlreadyRegisteredException;
@@ -10,6 +11,7 @@ import ua.cc.spon.exception.UserIsAlreadyRegisteredException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class PostgresUserDAO implements UserDAO {
 
@@ -33,8 +35,15 @@ public class PostgresUserDAO implements UserDAO {
             "(case when ? = (SELECT hash_password from users WHERE user_id = ?) then ? else crypt(?, gen_salt('bf', 8)) end) " +
             "WHERE user_id = ?";
 
+    Connection connection;
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
+    }
+
     @Override
     public void insert(User user) throws UserIsAlreadyRegisteredException {
+
 
         try (Connection con = DataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
@@ -127,7 +136,7 @@ public class PostgresUserDAO implements UserDAO {
     }
 
     @Override
-    public void update(User user) {
+    public void update(User user) throws DBException {
         try (Connection con = DataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(UPDATE_USER)) {
 
@@ -148,7 +157,7 @@ public class PostgresUserDAO implements UserDAO {
             }
 
         } catch (SQLException e) {
-           throw new RuntimeException(); // TODO: 07.09.2022
+           throw new DBException(e);
         }
 
     }

@@ -1,5 +1,7 @@
 package ua.cc.spon.util;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -26,6 +28,24 @@ public class HotelHelper {
         result = properties.getProperty(name);
 
         return result;
+
+    }
+
+    public static void proceedMessages(HttpServletRequest req) {
+
+        String successMessage = null;
+        if (req.getSession().getAttribute("success_message") != null) {
+            successMessage = (String) req.getSession().getAttribute("success_message");
+            req.getSession().removeAttribute("success_message");
+        }
+        String failMessage = null;
+        if (req.getSession().getAttribute("fail_message") != null) {
+            failMessage = (String) req.getSession().getAttribute("fail_message");
+            req.getSession().removeAttribute("fail_message");
+        }
+
+        req.setAttribute("success_message", successMessage);
+        req.setAttribute("fail_message", failMessage);
 
     }
 

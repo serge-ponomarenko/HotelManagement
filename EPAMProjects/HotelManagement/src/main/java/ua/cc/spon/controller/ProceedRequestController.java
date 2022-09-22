@@ -12,7 +12,10 @@ import ua.cc.spon.db.dao.RoomDAO;
 import ua.cc.spon.db.entity.Request;
 import ua.cc.spon.db.entity.Room;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.exception.DBException;
 import ua.cc.spon.service.PaginatorService;
+import ua.cc.spon.service.RequestParametersValidatorService;
+import ua.cc.spon.util.HotelHelper;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -33,7 +36,27 @@ public class ProceedRequestController extends HttpServlet {
 
         String locale = ((UserSettings) req.getSession().getAttribute("userSettings")).getLocale();
 
-        long requestId = Long.parseLong(Optional.ofNullable(req.getParameter("request_id")).orElseThrow());
+        RequestParametersValidatorService validator = new RequestParametersValidatorService(req);
+
+        long requestId;
+
+        try {
+            requestId = validator.validateAndGetLong("request_id", new IllegalArgumentException());
+        } catch (IllegalArgumentException e) {
+            req.getSession().setAttribute("fail_message", "error.invalidParameters");
+            resp.sendRedirect("reservationRequestsAction");
+            return;
+        }
+
+        if (req.getParameter("action") != null && req.getParameter("action").equals("delete")) {
+            try {
+                requestDAO.deleteById(requestId);
+            } catch (DBException e) {
+                req.getSession().setAttribute("fail_message", "error.someDBError");
+            }
+            resp.sendRedirect("reservationRequestsAction");
+            return;
+        }
 
         Request request = requestDAO.find(requestId, locale);
 
@@ -102,6 +125,8 @@ public class ProceedRequestController extends HttpServlet {
         req.setAttribute("roomsNumbers", roomsNumbers);
         req.setAttribute("request", request);
         req.setAttribute("nights", nights);
+
+        HotelHelper.proceedMessages(req);
 
         req.getRequestDispatcher("booking-options.jsp").forward(req, resp);
 

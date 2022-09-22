@@ -1,18 +1,15 @@
 package ua.cc.spon.db.dao;
 
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.exception.DBException;
 
 public interface UserSettingsDAO {
 
-	void insert(UserSettings userSettings);
+	void insert(UserSettings userSettings) throws DBException;
 
-	UserSettings findByUserId(long userId);
+	UserSettings findByUserId(long userId) throws DBException;
 
-	UserSettings find(long userSettingsId);
-
-	void update(UserSettings user);
+	void update(UserSettings user) throws DBException;
 	
-	void delete(long userSettingsId);
-
-	UserSettings findByHash(String userHash);
+	UserSettings findByHash(String userHash) throws DBException;
 }

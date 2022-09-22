@@ -2,7 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<c:set var = "curLocale" value = "${param.locale == null ? 'en' : param.locale}"/>
+<c:set var="curLocale" value="${param.locale == null ? 'en' : param.locale}"/>
 
 <fmt:setLocale value="${curLocale}"/>
 <fmt:setBundle basename="Strings"/>
@@ -21,10 +21,12 @@
         <form class="card card-md" action="signUpAction" method="post">
             <div class="card-body">
                 <h2 class="card-title text-center mb-4"><fmt:message key="sign-up.create-new-account"/></h2>
-                <c:if test="${param.msg == 'userAlreadyRegistered'}">
+
+                <c:if test="${not empty param.msg}">
                     <h3 class="card-title text-center bg-red-lt mb-4"><fmt:message
-                            key="sign-up.email-already-registered"/></h3>
+                            key="error.${param.msg}"/></h3>
                 </c:if>
+
                 <div class="mb-3">
                     <label class="form-label"><fmt:message key="sign-up.select-language"/></label>
 
@@ -32,14 +34,14 @@
                             onchange="window.location.href = window.location.pathname + '?locale=' + this.options[this.selectedIndex].value">
 
                         <c:forEach items="${locales.values()}" var="locale">
-                        <option value="${locale.getName()}"
-                                data-custom-properties="&lt;span class=&quot;flag flag-xs ${locale.getIconPath()}&quot;&gt;&lt;/span&gt;"
-                                <c:if test="${param.locale == locale.getName()}">
-                                    selected
-                                </c:if>
-                        >
-                                ${locale.getFullName()}
-                        </option>
+                            <option value="${locale.getName()}"
+                                    data-custom-properties="&lt;span class=&quot;flag flag-xs ${locale.getIconPath()}&quot;&gt;&lt;/span&gt;"
+                                    <c:if test="${param.locale == locale.getName()}">
+                                        selected
+                                    </c:if>
+                            >
+                                    ${locale.getFullName()}
+                            </option>
                         </c:forEach>
 
                     </select>
@@ -62,19 +64,15 @@
                 <div class="mb-3">
                     <label class="form-label"><fmt:message key="sign-up.password"/></label>
                     <div class="input-group input-group-flat">
-                        <input type="password" name="password" class="form-control"
+                        <input id="password" type="password" name="password" class="form-control"
                                placeholder="<fmt:message key="sign-up.enter-password"/>" autocomplete="off" required>
                         <span class="input-group-text">
-                  <a href="#" class="link-secondary" title="Show password" data-bs-toggle="tooltip">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
-                         stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
-                         stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12"
-                                                                                                            cy="12"
-                                                                                                            r="2"/><path
-                            d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7"/></svg>
+                  <a class="link-secondary" title="Show password" onclick="myFunction()" data-bs-toggle="tooltip">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="2"/><path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7"/></svg>
                   </a>
                 </span>
                     </div>
+                    <small class="form-hint mb-2"><fmt:message key="sing-in.minimum-eight-characters"/></small>
                 </div>
                 <div class="mb-3">
                     <label class="form-check">
@@ -128,6 +126,16 @@
         }));
     });
     // @formatter:on
+</script>
+<script>
+    function myFunction() {
+        var x = document.getElementById("password");
+        if (x.type === "password") {
+            x.type = "text";
+        } else {
+            x.type = "password";
+        }
+    }
 </script>
 </body>
 </html>

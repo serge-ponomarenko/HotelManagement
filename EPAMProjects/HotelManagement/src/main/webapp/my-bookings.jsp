@@ -2,10 +2,12 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
+<%@ taglib prefix="myTags" tagdir="/WEB-INF/tags" %>
+
 <fmt:setLocale value="${sessionScope.userSettings.getLocale()}"/>
 <fmt:setBundle basename="Strings"/>
 
-<% if (request.getAttribute("reservations") == null) response.sendRedirect("indexAction"); %>
+<c:if test="${reservations == null}"><jsp:forward page="indexAction" /></c:if>
 
 <!doctype html>
 
@@ -58,7 +60,7 @@
                         <h3 class="card-title"><fmt:message key="my-bookings.booking"/> #${reservation.getId()}</h3>
                         <div class="card-actions">
                             <c:if test="${reservation.getStatus().getId() == 2}">
-                            <a href="invoiceAction?id=${reservation.getId()}" class="btn btn-primary" data-id="${reservation.getId()}">
+                            <a href="invoiceAction?reservationId=${reservation.getId()}" class="btn btn-primary" data-id="${reservation.getId()}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-ad-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M11.933 5h-6.933v16h13v-8"></path>
@@ -70,7 +72,7 @@
                             </svg>
                                 <fmt:message key="my-bookings.invoice"/>
                             </a>
-                            <a href="#" class="btn btn-primary" data-id="${reservation.getId()}" data-bs-toggle="modal" data-bs-target="#modal-success">
+                            <a href="#" class="btn btn-primary" data-id="${reservation.getId()}" data-userid="${reservation.getUser().getId()}" data-bs-toggle="modal" data-bs-target="#modal-success">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-coin" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                     <circle cx="12" cy="12" r="9"></circle>
@@ -80,8 +82,8 @@
                                 <fmt:message key="my-bookings.pay-now"/>
                             </a>
                             </c:if>
-                            <c:if test="${reservation.getStatus().getId() == 2 || reservation.getStatus().getId() == 3 }">
-                            <a href="#" class="cancel-dialog btn btn-secondary" data-id="${reservation.getId()}" data-bs-toggle="modal" data-bs-target="#modal-danger">
+                            <c:if test="${reservation.getStatus().getId() == 2 || reservation.getStatus().getId() == 3 || reservation.getStatus().getId() == 5 }">
+                            <a href="#" class="cancel-dialog btn btn-secondary" data-id="${reservation.getId()}" data-userid="${reservation.getUser().getId()}" data-bs-toggle="modal" data-bs-target="#modal-danger">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-notes-off" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                                     <path d="M7 3h10a2 2 0 0 1 2 2v10m0 4a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-14"></path>
@@ -220,6 +222,7 @@
                                 <div class="col">
                                     <form action="cancelReservationAction" method="post">
                                         <input type="hidden" name="reservationId" id="reservationIdInput" value="-1">
+                                        <input type="hidden" name="userId" id="userIdInput" value="-1">
                                     <button id="buttonCancel" class="btn btn-danger w-100">
                                     <fmt:message key="my-bookings.cancel-reservation"/>
                                     </button>
@@ -294,6 +297,7 @@
                                 <div class="mt-2">
                                     <form action="paymentAction" method="post">
                                         <input type="hidden" name="reservationId" id="reservationIdInput2" value="-1">
+                                        <input type="hidden" name="userId" id="userIdInput2" value="-1">
                                     <button id="buttonPay" class="btn btn-primary w-100">
                                         <fmt:message key="my-bookings.pay-now"/>
                                     </button>
@@ -308,6 +312,9 @@
         </div>
 
         <jsp:include page="fragments/footer.jsp"/>
+
+        <myTags:success_message message="${success_message}" />
+        <myTags:fail_message message="${fail_message}" />
     </div>
 
     <!-- Libs JS -->
@@ -319,13 +326,13 @@
     <script>
 
         document.getElementById('modal-danger').addEventListener('show.bs.modal', function(e) {
-            //document.getElementById('buttonCancel').href = "cancelReservationAction?reservationId=" + e.relatedTarget.dataset.id;
             document.getElementById('reservationIdInput').value = e.relatedTarget.dataset.id;
+            document.getElementById('userIdInput').value = e.relatedTarget.dataset.userid;
         });
 
         document.getElementById('modal-success').addEventListener('show.bs.modal', function(e) {
-            //document.getElementById('buttonPay').href = "paymentAction?reservationId=" + e.relatedTarget.dataset.id;
             document.getElementById('reservationIdInput2').value = e.relatedTarget.dataset.id;
+            document.getElementById('userIdInput2').value = e.relatedTarget.dataset.userid;
         });
 
     </script>

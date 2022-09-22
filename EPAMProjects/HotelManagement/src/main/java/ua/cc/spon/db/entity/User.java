@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 
 @Data
-public class User implements Serializable {
+public class User implements Entity, Serializable {
 
     private long id;
     private String email;

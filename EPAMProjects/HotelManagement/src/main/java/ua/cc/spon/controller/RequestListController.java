@@ -8,19 +8,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import ua.cc.spon.db.dao.DAOFactory;
 import ua.cc.spon.db.dao.RequestDAO;
-import ua.cc.spon.db.dao.ReservationDAO;
 import ua.cc.spon.db.dao.StatusDAO;
 import ua.cc.spon.db.entity.Request;
 import ua.cc.spon.db.entity.Reservation;
-import ua.cc.spon.db.entity.User;
 import ua.cc.spon.db.entity.UserSettings;
 import ua.cc.spon.service.PaginatorService;
+import ua.cc.spon.util.HotelHelper;
 
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @WebServlet({"/reservationRequestsAction"})
 public class RequestListController extends HttpServlet {
@@ -31,12 +29,12 @@ public class RequestListController extends HttpServlet {
         ServletContext context = req.getServletContext();
         DAOFactory factory = (DAOFactory) context.getAttribute("DAOFactory");
 
-        ReservationDAO reservationDAO = factory.getReservationDAO();
         RequestDAO requestDAO = factory.getRequestDAO();
         StatusDAO statusDAO = factory.getStatusDAO();
 
         String locale = ((UserSettings) req.getSession().getAttribute("userSettings")).getLocale();
-        User user = ((User) req.getSession().getAttribute("user"));
+
+        HotelHelper.proceedMessages(req);
 
         Map<Reservation.Status, String> statusesTranslated = statusDAO.findNames(locale);
 
@@ -45,7 +43,7 @@ public class RequestListController extends HttpServlet {
 
         List<Request> requests = requestDAO.findAllPending(locale);
 
-        requests.sort(Comparator.comparingLong(Request::getId).reversed()); // TODO: 30.08.2022 Sorting!
+        requests.sort(Comparator.comparingLong(Request::getId));
 
         requests = paginator.generateSublist(requests);
         paginator.setRequestAttributes();

@@ -7,16 +7,16 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import ua.cc.spon.db.dao.DAOFactory;
-import ua.cc.spon.db.dao.RoomCategoryDAO;
 import ua.cc.spon.db.dao.RoomDAO;
 import ua.cc.spon.db.entity.Room;
 import ua.cc.spon.db.entity.UserSettings;
 import ua.cc.spon.service.PaginatorService;
+import ua.cc.spon.util.Constants;
+import ua.cc.spon.util.HotelHelper;
 
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @WebServlet({"/manageRoomsAction"})
 public class RoomsListController extends HttpServlet {
@@ -27,7 +27,6 @@ public class RoomsListController extends HttpServlet {
         ServletContext context = req.getServletContext();
         DAOFactory factory = (DAOFactory) context.getAttribute("DAOFactory");
         RoomDAO roomDAO = factory.getRoomDAO();
-
 
         String locale = ((UserSettings) req.getSession().getAttribute("userSettings")).getLocale();
 
@@ -42,7 +41,9 @@ public class RoomsListController extends HttpServlet {
 
         req.setAttribute("rooms", rooms);
 
-        req.getRequestDispatcher("rooms.jsp").forward(req, resp);
+        HotelHelper.proceedMessages(req);
+
+        req.getRequestDispatcher(Constants.ROOMS_URL).forward(req, resp);
 
     }
 
