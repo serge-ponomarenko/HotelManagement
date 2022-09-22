@@ -1,18 +1,23 @@
 package ua.cc.spon.db.dao.postgres;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ua.cc.spon.db.DataSource;
 import ua.cc.spon.db.dao.ReservationDAO;
 import ua.cc.spon.db.dao.RoomDAO;
+import ua.cc.spon.db.dao.UserDAO;
 import ua.cc.spon.db.entity.Reservation;
-import ua.cc.spon.db.entity.Room;
-import ua.cc.spon.db.entity.RoomCategory;
 import ua.cc.spon.db.entity.User;
+import ua.cc.spon.exception.DBException;
+import ua.cc.spon.exception.NoUserFoundException;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PostgresReservationDAO implements ReservationDAO {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final String INSERT_RESERVATION =
             "INSERT INTO reservations " +
@@ -38,6 +43,11 @@ public class PostgresReservationDAO implements ReservationDAO {
                     "FROM reservations r " +
                     "INNER JOIN statuses s ON s.status_id = r.status_id " +
                     "WHERE user_id = ?";
+
+    private static final String FIND_ALL =
+            "SELECT reservation_id, checkin_date, checkout_date, s.name, user_id, created_at, persons, price " +
+                    "FROM reservations r " +
+                    "INNER JOIN statuses s ON s.status_id = r.status_id";
 
     private static final String FIND_BY_ID =
             "SELECT reservation_id, checkin_date, checkout_date, s.name, user_id, created_at, persons, price " +
@@ -68,7 +78,7 @@ public class PostgresReservationDAO implements ReservationDAO {
             "WHERE status_id IN (4) AND (checkout_date = current_date))";
 
     @Override
-    public List<Reservation> findByUser(User user, String locale) {
+    public List<Reservation> findByUser(User user, String locale) throws DBException {
         List<Reservation> result = new ArrayList<>();
 
         try (Connection con = DataSource.getConnection();
@@ -76,18 +86,33 @@ public class PostgresReservationDAO implements ReservationDAO {
 
             statement.setLong(1, user.getId());
 
-            fillReservations(result, statement, user, locale);
+            fillReservations(result, statement, locale);
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
+            throw new DBException(e);
         }
 
         return result;
     }
 
     @Override
-    public List<Reservation> findAll() {
-        return null;
+    public List<Reservation> findAll(String locale) throws DBException {
+
+        List<Reservation> result = new ArrayList<>();
+
+        try (Connection con = DataSource.getConnection();
+             PreparedStatement statement = con.prepareStatement(FIND_ALL)) {
+
+            fillReservations(result, statement, locale);
+
+        } catch (SQLException e) {
+            logger.error(e.getMessage(), e);
+            throw new DBException(e);
+        }
+
+        return result;
+
     }
 
 
@@ -98,13 +123,9 @@ public class PostgresReservationDAO implements ReservationDAO {
     }
 
     @Override
-    public void insert(Reservation reservation) {
-
-        try (Connection con = DataSource.getConnection();
-             PreparedStatement statement1 = con.prepareStatement(INSERT_RESERVATION, Statement.RETURN_GENERATED_KEYS);
+    public void insert(Connection con, Reservation reservation) {
+        try (PreparedStatement statement1 = con.prepareStatement(INSERT_RESERVATION, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement statement2 = con.prepareStatement(INSERT_RESERVATIONS_ROOMS)) {
-
-            con.setAutoCommit(false);
 
             statement1.setString(1, reservation.getCheckinDate().toString());
             statement1.setString(2, reservation.getCheckoutDate().toString());
@@ -137,6 +158,22 @@ public class PostgresReservationDAO implements ReservationDAO {
             } catch (SQLException e) {
                 throw new SQLException("Creating reservation failed, no values added to linked table.");
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();  // TODO: 29.08.2022
+        }
+
+
+    }
+
+    @Override
+    public void insert(Reservation reservation) {
+
+        try (Connection con = DataSource.getConnection()) {
+
+            con.setAutoCommit(false);
+
+            insert(con, reservation);
 
             con.commit();
 
@@ -205,7 +242,10 @@ public class PostgresReservationDAO implements ReservationDAO {
 
     }
 
-    private void fillReservations(List<Reservation> result, PreparedStatement statement, User user, String locale) throws SQLException {
+    private void fillReservations(List<Reservation> result, PreparedStatement statement, String locale) throws SQLException {
+
+        PostgresUserDAO postgresUserDAO = new PostgresUserDAO();
+
         try (ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
                 Reservation reservation = new Reservation();
@@ -218,13 +258,15 @@ public class PostgresReservationDAO implements ReservationDAO {
                 reservation.setCreatedAt(resultSet.getTimestamp(6));
                 reservation.setPersons(resultSet.getInt(7));
                 reservation.setPrice(resultSet.getBigDecimal(8));
-                reservation.setUser(user);
+                reservation.setUser(postgresUserDAO.find(resultSet.getLong(5)));
 
                 reservation.setRooms(roomDAO.findByReservation(reservation.getId(), locale));
 
                 result.add(reservation);
 
             }
+        } catch (NoUserFoundException e) {
+            throw new RuntimeException(e); // TODO: 20.09.2022
         }
     }
 

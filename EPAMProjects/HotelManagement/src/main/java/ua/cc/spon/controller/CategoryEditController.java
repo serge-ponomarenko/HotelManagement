@@ -9,13 +9,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import ua.cc.spon.db.dao.*;
 import ua.cc.spon.db.entity.Locale;
 import ua.cc.spon.db.entity.RoomCategory;
-import ua.cc.spon.db.entity.User;
-import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.exception.DBException;
+import ua.cc.spon.exception.EmptyDescriptionException;
+import ua.cc.spon.exception.EmptyNameException;
+import ua.cc.spon.service.RequestParametersValidatorService;
+import ua.cc.spon.util.Constants;
+import ua.cc.spon.util.HotelHelper;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @WebServlet({"/editCategoryAction"})
 public class CategoryEditController extends HttpServlet {
@@ -27,19 +30,28 @@ public class CategoryEditController extends HttpServlet {
 
         RoomCategoryDAO roomCategoryDAO = factory.getRoomCategoryDAO();
 
-        String locale = ((UserSettings) req.getSession().getAttribute("userSettings")).getLocale();
-        User user = ((User) req.getSession().getAttribute("user"));
+        RequestParametersValidatorService validator = new RequestParametersValidatorService(req);
 
-        long categoryId = Long.parseLong(Optional.ofNullable(req.getParameter("category_id")).orElse("-1"));
+        long categoryId;
 
-        if (req.getParameter("action") != null && req.getParameter("action").equals("delete")) {
+        try {
+            categoryId = validator.validateAndGetLong("category_id", new IllegalArgumentException());
 
-            roomCategoryDAO.deleteById(categoryId);
-
+        } catch (IllegalArgumentException e) {
+            req.getSession().setAttribute("fail_message", "error.invalidParameters");
             resp.sendRedirect("manageCategoriesAction");
             return;
         }
 
+        if (req.getParameter("action") != null && req.getParameter("action").equals("delete")) {
+            try {
+                roomCategoryDAO.deleteById(categoryId);
+            } catch (DBException e) {
+                req.getSession().setAttribute("fail_message", "error.someDBError");
+            }
+            resp.sendRedirect("manageCategoriesAction");
+            return;
+        }
 
         Map<String, RoomCategory> editCategoryMap;
 
@@ -52,8 +64,17 @@ public class CategoryEditController extends HttpServlet {
         editCategoryMap = roomCategoryDAO.findByIdGroupByLocale(categoryId);
 
         for (String l : editCategoryMap.keySet()) {
-            String categoryName = req.getParameter("name_" + l);
-            String categoryDescription = req.getParameter("description_" + l);
+
+            String categoryName;
+            String categoryDescription;
+            try {
+                categoryName = validator.validateAndGetString("name_" + l, Constants.ANY_SYMBOLS, new EmptyNameException());
+                categoryDescription = validator.validateAndGetString("description_" + l, Constants.ANY_SYMBOLS, new EmptyDescriptionException());
+            } catch (EmptyNameException | EmptyDescriptionException e) {
+                req.setAttribute("fail_message", "error." + e.getMessage());
+                resp.sendRedirect("editCategoryAction?category_id=" + categoryId);
+                return;
+            }
 
             RoomCategory roomCategory = editCategoryMap.get(l);
             roomCategory.setName(categoryName);
@@ -75,14 +96,13 @@ public class CategoryEditController extends HttpServlet {
         RoomCategoryDAO roomCategoryDAO = factory.getRoomCategoryDAO();
         LocaleDAO localeDAO = factory.getLocaleDAO();
 
-        String locale = ((UserSettings) req.getSession().getAttribute("userSettings")).getLocale();
-        User user = ((User) req.getSession().getAttribute("user"));
+        RequestParametersValidatorService validator = new RequestParametersValidatorService(req);
 
-        long categoryId = Long.parseLong(Optional.ofNullable(req.getParameter("category_id")).orElse("-1"));
+        long categoryId = validator.validateAndGetLong("category_id", -1L);
 
         Map<String, RoomCategory> editCategoryMap = new HashMap<>();
 
-        for (Locale loc: localeDAO.findALL().values()) {
+        for (Locale loc : localeDAO.findALL().values()) {
             editCategoryMap.put(loc.getName(), new RoomCategory());
         }
 
@@ -93,7 +113,9 @@ public class CategoryEditController extends HttpServlet {
         req.setAttribute("editCategoryMap", editCategoryMap);
         req.setAttribute("categoryId", categoryId);
 
-        req.getRequestDispatcher("edit-category.jsp").forward(req, resp);
+        HotelHelper.proceedMessages(req);
+
+        req.getRequestDispatcher(Constants.EDIT_CATEGORY_URL).forward(req, resp);
 
     }
 

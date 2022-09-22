@@ -1,6 +1,7 @@
 package ua.cc.spon.db.dao;
 
 import ua.cc.spon.db.entity.Request;
+import ua.cc.spon.exception.DBException;
 
 import java.util.List;
 
@@ -13,4 +14,6 @@ public interface RequestDAO {
     Request find(long requestId, String locale);
 
     void updateReservation(Request request);
+
+    void deleteById(long requestId) throws DBException;
 }

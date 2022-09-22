@@ -8,8 +8,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import ua.cc.spon.service.PaginatorService;
 
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.Optional;
 
 @WebServlet("/pageAction")
 public class PageController extends HttpServlet {
@@ -18,6 +16,11 @@ public class PageController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         PaginatorService.proceedParametersToSession(req);
+
+        if (req.getHeader("referer") == null) {
+            resp.sendRedirect("indexAction");
+            return;
+        }
 
         resp.sendRedirect(req.getHeader("referer"));
 

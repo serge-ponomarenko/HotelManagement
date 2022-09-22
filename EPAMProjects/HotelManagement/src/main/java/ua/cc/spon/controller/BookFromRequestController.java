@@ -10,13 +10,16 @@ import ua.cc.spon.db.dao.DAOFactory;
 import ua.cc.spon.db.dao.RequestDAO;
 import ua.cc.spon.db.dao.ReservationDAO;
 import ua.cc.spon.db.dao.RoomDAO;
-import ua.cc.spon.db.entity.*;
+import ua.cc.spon.db.entity.Request;
+import ua.cc.spon.db.entity.Reservation;
+import ua.cc.spon.db.entity.Room;
+import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.service.RequestParametersValidatorService;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @WebServlet({"/makeReservationFromRequestAction"})
@@ -32,10 +35,21 @@ public class BookFromRequestController extends HttpServlet {
         RequestDAO requestDAO = factory.getRequestDAO();
 
         String locale = ((UserSettings) req.getSession().getAttribute("userSettings")).getLocale();
-        User user = ((User) req.getSession().getAttribute("user"));
 
-        long requestId = Long.parseLong(Optional.ofNullable(req.getParameter("request_id")).orElse("-1"));
-        List<String> roomStrings = List.of(req.getParameterValues("room"));
+        RequestParametersValidatorService validator = new RequestParametersValidatorService(req);
+
+        long requestId;
+        List<Long> roomsId;
+
+        try {
+            requestId = validator.validateAndGetLong("request_id", new IllegalArgumentException());
+            roomsId = validator.validateAndGetLongArray("room", new IllegalArgumentException());
+
+        } catch (IllegalArgumentException e) {
+            req.getSession().setAttribute("fail_message", "error.invalidParameters");
+            resp.sendRedirect("reservationRequestsAction");
+            return;
+        }
 
         Request request = requestDAO.find(requestId, locale);
 
@@ -48,9 +62,9 @@ public class BookFromRequestController extends HttpServlet {
         List<Room> rooms = roomDAO.findFreeRooms(checkinDate, checkoutDate, locale);
 
         rooms = rooms.stream()
-                .filter(r -> roomStrings.contains(String.valueOf(r.getId())))
+                .filter(r -> roomsId.contains(r.getId()))
                         .collect(Collectors.toList()); 
-        if (rooms.size() != roomStrings.size()) throw new RuntimeException(); // TODO: 04.09.2022  
+        if (rooms.size() != roomsId.size()) throw new RuntimeException(); // TODO: 04.09.2022
         
         BigDecimal price = rooms.stream()
                 .map(Room::getPrice)
@@ -72,7 +86,7 @@ public class BookFromRequestController extends HttpServlet {
         request.setReservation(reservation);
         requestDAO.updateReservation(request);
 
-        resp.sendRedirect("myBookingsAction");  // TODO: 04.09.2022
+        resp.sendRedirect("hotelOccupancyAction");
 
     }
 

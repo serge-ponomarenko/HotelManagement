@@ -13,14 +13,14 @@ import ua.cc.spon.db.entity.Room;
 import ua.cc.spon.db.entity.RoomCategory;
 import ua.cc.spon.db.entity.UserSettings;
 import ua.cc.spon.service.PaginatorService;
+import ua.cc.spon.service.RequestParametersValidatorService;
+import ua.cc.spon.util.HotelHelper;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -37,23 +37,24 @@ public class IndexController extends HttpServlet {
 
         String locale = ((UserSettings) req.getSession().getAttribute("userSettings")).getLocale();
 
-        String message = null;
-        if (req.getSession().getAttribute("message") != null) {
-            message = (String) req.getSession().getAttribute("message");
-            req.getSession().removeAttribute("message");
-        }
+        RequestParametersValidatorService validator = new RequestParametersValidatorService(req);
 
-        LocalDate checkinDate = LocalDate.parse(Optional.ofNullable(req.getParameter("checkin-date")).orElse("1970-01-01"));
-        LocalDate checkoutDate = LocalDate.parse(Optional.ofNullable(req.getParameter("checkout-date")).orElse("2100-01-01"));
+        LocalDate checkinDate;
+        LocalDate checkoutDate;
+        int personCount;
+        List<Long> roomCategoryId;
+        BigDecimal priceFrom;
+        BigDecimal priceTo;
+
+        checkinDate = validator.validateAndGetDate("checkin-date", LocalDate.of(1970, 1, 1));
+        checkoutDate = validator.validateAndGetDate("checkout-date", LocalDate.now().plusYears(50));
+        personCount = validator.validateAndGetInt("persons", 50);
+        roomCategoryId = validator.validateAndGetLongArray("room-category");
+        priceFrom = validator.validateAndGetBigDecimal("price-from", BigDecimal.ZERO);
+        priceTo = validator.validateAndGetBigDecimal("price-to", BigDecimal.ZERO);
+
+
         int nights = (int) (checkoutDate.toEpochDay() - checkinDate.toEpochDay());
-
-        int personCount = Integer.parseInt(Optional.ofNullable(req.getParameter("persons")).orElse("999"));
-        String[] roomCategoryId = req.getParameterValues("room-category");
-
-        String stringPriceFrom = req.getParameter("price-from");
-        String stringPriceTo = req.getParameter("price-to");
-        BigDecimal priceFrom = new BigDecimal(stringPriceFrom == null || stringPriceFrom.isEmpty() ? "0" : stringPriceFrom);
-        BigDecimal priceTo = new BigDecimal(stringPriceTo == null || stringPriceTo.isEmpty() ? "0" : stringPriceTo);
 
         PaginatorService paginator =
                 new PaginatorService(req, "index", new Integer[]{5, 10, 20});
@@ -68,8 +69,8 @@ public class IndexController extends HttpServlet {
         };
 
         Predicate<Room> categoryPredicate = room -> {
-            if (roomCategoryId == null) return true;
-            return Arrays.stream(roomCategoryId).anyMatch(s -> Long.parseLong(s) == room.getRoomCategory().getId());
+            if (roomCategoryId.isEmpty()) return true;
+            return roomCategoryId.stream().anyMatch(l -> l == room.getRoomCategory().getId());
         };
 
         Predicate<Room> personsPredicate = room -> room.getOccupancy() >= personCount;
@@ -99,7 +100,7 @@ public class IndexController extends HttpServlet {
         req.setAttribute("roomCategories", roomCategories);
         req.setAttribute("nights", nights);
 
-        req.setAttribute("message", message);
+        HotelHelper.proceedMessages(req);
 
         req.getRequestDispatcher("index.jsp").forward(req, resp);
 

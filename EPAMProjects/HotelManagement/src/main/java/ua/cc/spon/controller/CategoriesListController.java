@@ -8,9 +8,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import ua.cc.spon.db.dao.DAOFactory;
 import ua.cc.spon.db.dao.RoomCategoryDAO;
-import ua.cc.spon.db.dao.RoomDAO;
 import ua.cc.spon.db.entity.RoomCategory;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.util.Constants;
+import ua.cc.spon.util.HotelHelper;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -24,18 +25,18 @@ public class CategoriesListController extends HttpServlet {
 
         ServletContext context = req.getServletContext();
         DAOFactory factory = (DAOFactory) context.getAttribute("DAOFactory");
-        RoomDAO roomDAO = factory.getRoomDAO();
         RoomCategoryDAO roomCategoryDAO = factory.getRoomCategoryDAO();
 
         String locale = ((UserSettings) req.getSession().getAttribute("userSettings")).getLocale();
-
 
         List<RoomCategory> roomCategories = roomCategoryDAO.findALL(locale);
         roomCategories.sort(Comparator.comparingLong(RoomCategory::getId));
 
         req.setAttribute("roomCategories", roomCategories);
 
-        req.getRequestDispatcher("categories.jsp").forward(req, resp);
+        HotelHelper.proceedMessages(req);
+
+        req.getRequestDispatcher(Constants.CATEGORIES_URL).forward(req, resp);
 
     }
 

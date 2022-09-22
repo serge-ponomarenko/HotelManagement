@@ -3,6 +3,7 @@ package ua.cc.spon.db.dao.postgres;
 import ua.cc.spon.db.DataSource;
 import ua.cc.spon.db.dao.RoomCategoryDAO;
 import ua.cc.spon.db.entity.RoomCategory;
+import ua.cc.spon.exception.DBException;
 import ua.cc.spon.exception.UserIsAlreadyRegisteredException;
 
 import java.sql.*;
@@ -49,7 +50,7 @@ public class PostgresRoomCategoryDAO implements RoomCategoryDAO {
 
 
     @Override
-    public void deleteById(long categoryId) {
+    public void deleteById(long categoryId) throws DBException {
         try (Connection con = DataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(DELETE_CATEGORY)) {
 
@@ -62,7 +63,7 @@ public class PostgresRoomCategoryDAO implements RoomCategoryDAO {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException(); // TODO: 07.09.2022
+            throw new DBException(e);
         }
     }
 

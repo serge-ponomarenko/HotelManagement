@@ -2,6 +2,7 @@ package ua.cc.spon.db.entity;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -9,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class Reservation {
+public class Reservation implements Entity, Serializable {
 
     private long id;
     private LocalDate checkinDate;

@@ -2,6 +2,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
+<%@ taglib uri="/WEB-INF/badge-tags.tld" prefix="bt" %>
+
 <fmt:setLocale value="${sessionScope.userSettings.getLocale()}"/>
 <fmt:setBundle basename="Strings"/>
 
@@ -54,8 +56,12 @@
                                     </a>
                                     <a class="dropdown-item" href="reservationRequestsAction">
                                         <fmt:message key="header.pending-reservation-requests"/>
-                                        <span class="badge badge-sm bg-red">2</span>
+                                        <bt:pendingRequestsBadgeTag />
                                     </a>
+                                    <a class="dropdown-item" href="allBookingsAction">
+                                        <fmt:message key="header.manage-reservations"/>
+                                    </a>
+
                                     <c:if test="${user.getRole().toString().equals('ADMINISTRATOR')}">
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="manageUsersAction">
@@ -68,6 +74,7 @@
                                         <fmt:message key="header.manage-rooms"/>
                                     </a>
                                     </c:if>
+
                                 </div>
                             </div>
                         </div>
@@ -89,6 +96,7 @@
                             <span class="nav-link-title">
                       <fmt:message key="header.my-bookings"/>
                     </span>
+                            <bt:bookingBadgeTag />
                         </a>
                     </li>
                 </ul>

@@ -9,6 +9,7 @@ import ua.cc.spon.db.entity.Request;
 import ua.cc.spon.db.entity.Reservation;
 import ua.cc.spon.db.entity.Room;
 import ua.cc.spon.db.entity.User;
+import ua.cc.spon.exception.DBException;
 import ua.cc.spon.exception.NoUserFoundException;
 
 import java.sql.*;
@@ -35,6 +36,28 @@ public class PostgresRequestDAO implements RequestDAO {
                     "SET reservation_id = ? " +
                     "WHERE reservation_request_id = ?";
 
+    private static final String DELETE_BY_ID =
+            "DELETE FROM reservation_requests " +
+                    "WHERE reservation_request_id = ?";
+
+
+    @Override
+    public void deleteById(long requestId) throws DBException {
+        try (Connection con = DataSource.getConnection();
+             PreparedStatement statement = con.prepareStatement(DELETE_BY_ID)) {
+
+            statement.setLong(1, requestId);
+
+            int affectedRows = statement.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Deleting failed, no rows affected.");
+            }
+
+        } catch (SQLException e) {
+            throw new DBException(e);
+        }
+    }
 
     @Override
     public void updateReservation(Request request) {

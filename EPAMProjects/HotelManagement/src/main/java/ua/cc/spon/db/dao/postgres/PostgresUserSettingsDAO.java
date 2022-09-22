@@ -1,12 +1,17 @@
 package ua.cc.spon.db.dao.postgres;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ua.cc.spon.db.DataSource;
 import ua.cc.spon.db.dao.UserSettingsDAO;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.exception.DBException;
 
 import java.sql.*;
 
 public class PostgresUserSettingsDAO implements UserSettingsDAO {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final String INSERT_USER_SETTINGS = "INSERT INTO user_settings (user_id, locale_id, hash) " +
             "VALUES(?, (SELECT locale_id FROM locales WHERE locales.name = ?), ?)";
@@ -24,7 +29,7 @@ public class PostgresUserSettingsDAO implements UserSettingsDAO {
 
 
     @Override
-    public void insert(UserSettings userSettings) {
+    public void insert(UserSettings userSettings) throws DBException {
 
         try (Connection con = DataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(INSERT_USER_SETTINGS, Statement.RETURN_GENERATED_KEYS)) {
@@ -48,12 +53,13 @@ public class PostgresUserSettingsDAO implements UserSettingsDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
+            throw new DBException(e);
         }
     }
 
     @Override
-    public UserSettings findByUserId(long userId) {
+    public UserSettings findByUserId(long userId) throws DBException {
 
         UserSettings userSettings = new UserSettings();
 
@@ -65,19 +71,15 @@ public class PostgresUserSettingsDAO implements UserSettingsDAO {
             fillUserSettings(userSettings, statement);
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
+            throw new DBException(e);
         }
 
         return userSettings;
     }
 
     @Override
-    public UserSettings find(long userSettingsId) {
-        return null;
-    }
-
-    @Override
-    public void update(UserSettings userSettings) {
+    public void update(UserSettings userSettings) throws DBException {
 
         try (Connection con = DataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(UPDATE_USER_SETTINGS)) {
@@ -90,16 +92,17 @@ public class PostgresUserSettingsDAO implements UserSettingsDAO {
             int affectedRows = statement.executeUpdate();
 
             if (affectedRows == 0) {
-                throw new SQLException("Creating user failed, no rows affected.");
+                throw new SQLException("UserSettings update failed, no rows affected.");
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
+            throw new DBException(e);
         }
     }
 
     @Override
-    public UserSettings findByHash(String userHash) {
+    public UserSettings findByHash(String userHash) throws DBException {
         UserSettings userSettings = new UserSettings();
 
         try (Connection con = DataSource.getConnection();
@@ -110,7 +113,8 @@ public class PostgresUserSettingsDAO implements UserSettingsDAO {
             fillUserSettings(userSettings, statement);
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
+            throw new DBException(e);
         }
 
         return userSettings;
@@ -127,8 +131,4 @@ public class PostgresUserSettingsDAO implements UserSettingsDAO {
         }
     }
 
-    @Override
-    public void delete(long userSettingsId) {
-
-    }
 }

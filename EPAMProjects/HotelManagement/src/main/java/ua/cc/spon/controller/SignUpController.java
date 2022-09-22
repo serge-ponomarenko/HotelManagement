@@ -12,10 +12,16 @@ import ua.cc.spon.db.dao.UserDAO;
 import ua.cc.spon.db.dao.UserSettingsDAO;
 import ua.cc.spon.db.entity.User;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.exception.DBException;
+import ua.cc.spon.exception.InvalidEmailParameterException;
+import ua.cc.spon.exception.InvalidPasswordParameterException;
 import ua.cc.spon.exception.UserIsAlreadyRegisteredException;
 import ua.cc.spon.service.LoginService;
+import ua.cc.spon.service.RequestParametersValidatorService;
 
 import java.io.IOException;
+
+import static ua.cc.spon.util.Constants.*;
 
 @WebServlet("/signUpAction")
 public class SignUpController extends HttpServlet {
@@ -28,7 +34,7 @@ public class SignUpController extends HttpServlet {
 
         req.setAttribute("locales", localeDAO.findALL());
 
-        req.getRequestDispatcher("sign-up.jsp").forward(req, resp);
+        req.getRequestDispatcher(SIGN_UP_URL).forward(req, resp);
     }
 
     @Override
@@ -39,11 +45,31 @@ public class SignUpController extends HttpServlet {
         UserDAO userDAO = factory.getUserDAO();
         UserSettingsDAO userSettingsDAO = factory.getUserSettingsDAO();
 
-        String userFirstName = req.getParameter("firstName");
-        String userLastName = req.getParameter("lastName");
-        String userEmail = req.getParameter("email");
-        String userPassword = req.getParameter("password");
-        String userLocale = req.getParameter("locale");
+        RequestParametersValidatorService validator = new RequestParametersValidatorService(req);
+
+        String userFirstName;
+        String userLastName;
+        String userLocale;
+        String userEmail;
+        String userPassword;
+
+        try {
+            userEmail = validator.validateAndGetString("email",
+                    EMAIL_PATTERN,
+                    new InvalidEmailParameterException());
+            userPassword = validator.validateAndGetString("password",
+                    PASSWORD_PATTERN,
+                    new InvalidPasswordParameterException());
+            userFirstName = validator.validateAndGetString("firstName", FIRST_LAST_NAME_PATTERN, new IllegalArgumentException());
+            userLastName = validator.validateAndGetString("lastName", FIRST_LAST_NAME_PATTERN, new IllegalArgumentException());
+            userLocale = validator.validateAndGetString("locale", LOCALE_PATTERN, new IllegalArgumentException());
+        } catch (InvalidEmailParameterException | InvalidPasswordParameterException e) {
+            resp.sendRedirect("signUpAction?msg=" + e.getMessage());
+            return;
+        } catch (IllegalArgumentException e) {
+            resp.sendRedirect("signUpAction?msg=invalidParameters");
+            return;
+        }
 
         User user = new User();
         user.setEmail(userEmail);
@@ -54,11 +80,7 @@ public class SignUpController extends HttpServlet {
 
         try {
             userDAO.insert(user);
-        } catch (UserIsAlreadyRegisteredException e) {
-            resp.sendRedirect("signUpAction?msg=userAlreadyRegistered&locale=" + userLocale);
-        }
 
-        if (user.getId() > 0) {
             UserSettings userSettings = new UserSettings();
             userSettings.setUserId(user.getId());
             userSettings.setLocale(userLocale);
@@ -66,8 +88,15 @@ public class SignUpController extends HttpServlet {
 
             LoginService.initializeSession(req, resp, user, false);
 
-            resp.sendRedirect("indexAction");
+        } catch (UserIsAlreadyRegisteredException e) {
+            resp.sendRedirect("signUpAction?msg=" + e.getMessage() + "&locale=" + userLocale);
+            return;
+        } catch (DBException e) {
+            resp.sendRedirect("signUnAction?msg=invalidParameters");
+            return;
         }
+
+        resp.sendRedirect("indexAction");
 
     }
 

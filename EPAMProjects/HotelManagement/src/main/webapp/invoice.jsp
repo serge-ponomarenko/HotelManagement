@@ -2,10 +2,12 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
+<%@ taglib prefix="myTags" tagdir="/WEB-INF/tags" %>
+
 <fmt:setLocale value="${sessionScope.userSettings.getLocale()}"/>
 <fmt:setBundle basename="Strings"/>
 
-<% if (request.getAttribute("reservation") == null) response.sendRedirect("indexAction"); %>
+<c:if test="${reservation == null}"><jsp:forward page="indexAction" /></c:if>
 
 <!doctype html>
 
@@ -36,9 +38,12 @@
                             <fmt:message key="invoice.print-invoice"/>
                         </button>
                     </div>
+                    
+                    <c:if test="${!reservation.getStatus().toString().equals('PAID')}">
                     <div class="col-2 d-print-none">
                     <form action="paymentAction" method="post">
                         <input type="hidden" name="reservationId" value="${reservation.getId()}">
+                        <input type="hidden" name="userId" value="${reservation.getUser().getId()}">
                     <button class="d-print-none btn btn-primary">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-coin" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -50,6 +55,9 @@
                     </button>
                     </form>
                     </div>
+                    </c:if>
+                    
+                    
                 </div>
             </div>
         </div>
@@ -132,6 +140,9 @@
             </div>
             <!-- Including Page footer -->
             <jsp:include page="fragments/footer.jsp"/>
+
+            <myTags:success_message message="${success_message}" />
+            <myTags:fail_message message="${fail_message}" />
 
         </div>
     </div>

@@ -9,12 +9,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import ua.cc.spon.db.dao.DAOFactory;
 import ua.cc.spon.db.dao.RequestDAO;
 import ua.cc.spon.db.dao.RoomCategoryDAO;
-import ua.cc.spon.db.entity.*;
+import ua.cc.spon.db.entity.Request;
+import ua.cc.spon.db.entity.RoomCategory;
+import ua.cc.spon.db.entity.User;
+import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.service.RequestParametersValidatorService;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @WebServlet({"/requestAction"})
@@ -33,13 +36,27 @@ public class RequestController extends HttpServlet {
 
         List<RoomCategory> roomCategories = roomCategoryDAO.findALL(locale);
 
-        LocalDate checkinDate = LocalDate.parse(Optional.ofNullable(req.getParameter("checkin-date")).orElse("1970-01-01"));
-        LocalDate checkoutDate = LocalDate.parse(Optional.ofNullable(req.getParameter("checkout-date")).orElse("2100-01-01"));
+        RequestParametersValidatorService validator = new RequestParametersValidatorService(req);
 
-        int personCount = Integer.parseInt(Optional.ofNullable(req.getParameter("persons")).orElse("999"));
-        int roomCount = Integer.parseInt(Optional.ofNullable(req.getParameter("rooms")).orElse("999"));
-        String[] roomCategoryId = req.getParameterValues("room-category");
-        String additionalInformation = req.getParameter("additional-information");
+        LocalDate checkinDate;
+        LocalDate checkoutDate;
+        int personCount;
+        int roomCount;
+        List<Long> roomCategoriesId;
+        String additionalInformation;
+
+        try {
+            checkinDate = validator.validateAndGetDate("checkin-date", new IllegalArgumentException());
+            checkoutDate = validator.validateAndGetDate("checkout-date", new IllegalArgumentException());
+            personCount = validator.validateAndGetInt("persons", new IllegalArgumentException());
+            roomCount = validator.validateAndGetInt("rooms", new IllegalArgumentException());
+            roomCategoriesId = validator.validateAndGetLongArray("room-category");
+            additionalInformation = validator.validateAndGetString("additional-information", "");
+        } catch (IllegalArgumentException e) {
+            req.getSession().setAttribute("fail_message", "error.invalidParameters");
+            resp.sendRedirect("indexAction");
+            return;
+        }
 
         Request request = new Request();
         request.setCheckinDate(checkinDate);
@@ -49,14 +66,8 @@ public class RequestController extends HttpServlet {
         request.setUser(user);
         request.setAdditionalInformation(additionalInformation);
 
-        String[] finalRoomCategoryId = (roomCategoryId == null ? new String[0] : roomCategoryId);
         List<RoomCategory> filteredCategories = roomCategories.stream()
-                .filter(rc -> {
-                    for (String s : finalRoomCategoryId) {
-                        if (rc.getId() == Long.parseLong(s)) return true;
-                    }
-                    return false;
-                })
+                .filter(rc -> roomCategoriesId.contains(rc.getId()))
                 .collect(Collectors.toList());
 
         if (filteredCategories.isEmpty()) filteredCategories = roomCategories;
@@ -65,7 +76,7 @@ public class RequestController extends HttpServlet {
 
         requestDAO.insert(request);
 
-        req.getSession().setAttribute("message", "index.your-request-has-been-send");
+        req.getSession().setAttribute("success_message", "index.your-request-has-been-send");
 
         resp.sendRedirect("indexAction");
 

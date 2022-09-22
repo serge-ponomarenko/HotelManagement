@@ -6,11 +6,14 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ua.cc.spon.db.dao.DAOFactory;
 import ua.cc.spon.db.dao.UserDAO;
 import ua.cc.spon.db.dao.UserSettingsDAO;
 import ua.cc.spon.db.entity.User;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.exception.DBException;
 import ua.cc.spon.exception.NoUserFoundException;
 import ua.cc.spon.service.LoginService;
 
@@ -20,6 +23,8 @@ import java.util.List;
 
 @WebFilter(filterName = "/AuthenticationFilter", urlPatterns = {"/*"})
 public class AuthenticationFilter implements Filter {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final List<String> allowedPagesWithoutLogin
             = Arrays.asList("/sign-in.jsp", "/sign-up.jsp",
@@ -56,18 +61,18 @@ public class AuthenticationFilter implements Filter {
             UserDAO userDAO = factory.getUserDAO();
             UserSettingsDAO userSettingsDAO = factory.getUserSettingsDAO();
 
-            UserSettings userSettings = userSettingsDAO.findByHash(userHash);
-            User user = null;
+            UserSettings userSettings;
+            User user;
             try {
+                userSettings = userSettingsDAO.findByHash(userHash);
                 user = userDAO.find(userSettings.getUserId());
-            } catch (NoUserFoundException e) {
+                LoginService.initializeSession(req, res, user, false);
+            } catch (NoUserFoundException | DBException e) {
                 userCookie.setMaxAge(0);
                 res.addCookie(userCookie);
                 res.sendRedirect("signInAction");
                 return;
             }
-
-            LoginService.initializeSession(req, res, user, false);
 
             res.sendRedirect("indexAction");
             return;

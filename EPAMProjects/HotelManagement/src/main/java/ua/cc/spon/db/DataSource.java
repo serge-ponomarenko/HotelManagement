@@ -19,9 +19,9 @@ public class DataSource {
         config.setJdbcUrl(connectionUrl);
         config.setUsername(dbUser);
         config.setPassword(dbPassword);
-        config.addDataSourceProperty("cachePrepStmts" , "true");
-        config.addDataSourceProperty("prepStmtCacheSize" , "250");
-        config.addDataSourceProperty("prepStmtCacheSqlLimit" , "2048");
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
         config.setDriverClassName(HotelHelper.getProperty("db.driver"));
         ds = new HikariDataSource(config);
     }

@@ -12,13 +12,15 @@ import ua.cc.spon.db.dao.StatusDAO;
 import ua.cc.spon.db.entity.Reservation;
 import ua.cc.spon.db.entity.User;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.exception.DBException;
 import ua.cc.spon.service.PaginatorService;
+import ua.cc.spon.util.Constants;
+import ua.cc.spon.util.HotelHelper;
 
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @WebServlet({"/myBookingsAction"})
 public class BookingsListController extends HttpServlet {
@@ -40,9 +42,16 @@ public class BookingsListController extends HttpServlet {
         PaginatorService paginator =
                 new PaginatorService(req, "myBookings", new Integer[]{5, 10, 20});
 
-        List<Reservation> reservations = reservationDAO.findByUser(user, locale);
+        List<Reservation> reservations = null;
+        try {
+            reservations = reservationDAO.findByUser(user, locale);
+        } catch (DBException e) {
+            req.setAttribute("fail_message", "error.someDBError");
+            req.getRequestDispatcher(Constants.MY_BOOKINGS_URL).forward(req, resp);
+            return;
+        }
 
-        reservations.sort(Comparator.comparingLong(Reservation::getId).reversed()); // TODO: 30.08.2022 Sorting!
+        reservations.sort(Comparator.comparingLong(Reservation::getId).reversed());
 
         reservations = paginator.generateSublist(reservations);
         paginator.setRequestAttributes();
@@ -50,7 +59,9 @@ public class BookingsListController extends HttpServlet {
         req.setAttribute("reservations", reservations);
         req.setAttribute("statusesTranslated", statusesTranslated);
 
-        req.getRequestDispatcher("my-bookings.jsp").forward(req, resp);
+        HotelHelper.proceedMessages(req);
+
+        req.getRequestDispatcher(Constants.MY_BOOKINGS_URL).forward(req, resp);
 
     }
 
