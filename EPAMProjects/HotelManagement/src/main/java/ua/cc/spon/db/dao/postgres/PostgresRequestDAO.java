@@ -1,22 +1,19 @@
 package ua.cc.spon.db.dao.postgres;
 
-import ua.cc.spon.db.DataSource;
-import ua.cc.spon.db.dao.RequestDAO;
-import ua.cc.spon.db.dao.RoomCategoryDAO;
-import ua.cc.spon.db.dao.RoomDAO;
-import ua.cc.spon.db.dao.UserDAO;
+import ua.cc.spon.db.dao.*;
 import ua.cc.spon.db.entity.Request;
-import ua.cc.spon.db.entity.Reservation;
-import ua.cc.spon.db.entity.Room;
+import ua.cc.spon.db.entity.RoomCategory;
 import ua.cc.spon.db.entity.User;
-import ua.cc.spon.exception.DBException;
-import ua.cc.spon.exception.NoUserFoundException;
+import ua.cc.spon.exception.DaoException;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PostgresRequestDAO implements RequestDAO {
+public class PostgresRequestDAO extends RequestDAO {
 
     private static final String INSERT_REQUEST =
             "INSERT INTO reservation_requests " +
@@ -29,7 +26,8 @@ public class PostgresRequestDAO implements RequestDAO {
                     "VALUES(?, ?)";
 
     private static final String FIND_ALL_PENDING =
-            "SELECT * FROM reservation_requests WHERE reservation_id IS null";
+            "SELECT * FROM reservation_requests " +
+                    "WHERE reservation_id IS null";
 
     private static final String UPDATE_STATUS =
             "UPDATE reservation_requests " +
@@ -40,13 +38,16 @@ public class PostgresRequestDAO implements RequestDAO {
             "DELETE FROM reservation_requests " +
                     "WHERE reservation_request_id = ?";
 
+    private static final String FIND_BY_ID =
+            "SELECT * FROM reservation_requests " +
+                    "WHERE reservation_request_id = ?";
+
 
     @Override
-    public void deleteById(long requestId) throws DBException {
-        try (Connection con = DataSource.getConnection();
-             PreparedStatement statement = con.prepareStatement(DELETE_BY_ID)) {
+    public void delete(int requestId) throws DaoException {
+        try (PreparedStatement statement = connection.prepareStatement(DELETE_BY_ID)) {
 
-            statement.setLong(1, requestId);
+            statement.setInt(1, requestId);
 
             int affectedRows = statement.executeUpdate();
 
@@ -55,17 +56,16 @@ public class PostgresRequestDAO implements RequestDAO {
             }
 
         } catch (SQLException e) {
-            throw new DBException(e);
+            throw new DaoException(e.getMessage());
         }
     }
 
     @Override
-    public void updateReservation(Request request) {
-        try (Connection con = DataSource.getConnection();
-             PreparedStatement statement = con.prepareStatement(UPDATE_STATUS)) {
+    public void updateReservation(Request request) throws DaoException {
+        try (PreparedStatement statement = connection.prepareStatement(UPDATE_STATUS)) {
 
-            statement.setLong(1, request.getReservation().getId());
-            statement.setLong(2, request.getId());
+            statement.setInt(1, request.getReservation().getId());
+            statement.setInt(2, request.getId());
 
             int affectedRows = statement.executeUpdate();
 
@@ -74,49 +74,54 @@ public class PostgresRequestDAO implements RequestDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();  // TODO: 29.08.2022
+            throw new DaoException(e.getMessage());
         }
     }
 
     @Override
-    public Request find(long requestId, String locale) {
-        return findAllPending(locale).stream()
-                .filter(request -> request.getId() == requestId)
-                .findFirst()
-                .orElseThrow();
+    public Request find(int requestId, String locale) throws DaoException {
+        List<Request> result;
+
+        try (PreparedStatement statement = connection.prepareStatement(FIND_BY_ID)) {
+
+            statement.setInt(1, requestId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                result = fillRequests(resultSet, locale);
+            }
+        } catch (SQLException e) {
+            throw new DaoException(e.getMessage());
+        }
+
+        return result.isEmpty() ? null : result.get(0);
     }
 
     @Override
-    public List<Request> findAllPending(String locale) {
-        List<Request> result = new ArrayList<>();
+    public List<Request> findAllPending(String locale) throws DaoException {
+        List<Request> result;
 
-        try (Connection con = DataSource.getConnection();
-             PreparedStatement statement = con.prepareStatement(FIND_ALL_PENDING)) {
-
-            fillRequests(result, statement, locale);
-
+        try (Statement statement = connection.createStatement()) {
+            try (ResultSet resultSet = statement.executeQuery(FIND_ALL_PENDING)) {
+                result = fillRequests(resultSet, locale);
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DaoException(e.getMessage());
         }
 
         return result;
     }
 
     @Override
-    public void insert(Request request) {
-
-        try (Connection con = DataSource.getConnection();
-             PreparedStatement statement1 = con.prepareStatement(INSERT_REQUEST, Statement.RETURN_GENERATED_KEYS);
-             PreparedStatement statement2 = con.prepareStatement(INSERT_REQUEST_CATEGORIES)) {
-
-            con.setAutoCommit(false);
-
-            statement1.setString(1, request.getCheckinDate().toString());
-            statement1.setString(2, request.getCheckoutDate().toString());
-            statement1.setInt(3, request.getPersons());
-            statement1.setInt(4, request.getRooms());
-            statement1.setString(5, request.getAdditionalInformation());
-            statement1.setLong(6, request.getUser().getId());
+    public void insert(Request request) throws DaoException {
+        try (PreparedStatement statement1 = connection.prepareStatement(INSERT_REQUEST, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement statement2 = connection.prepareStatement(INSERT_REQUEST_CATEGORIES)) {
+            int k = 0;
+            statement1.setString(++k, request.getCheckinDate().toString());
+            statement1.setString(++k, request.getCheckoutDate().toString());
+            statement1.setInt(++k, request.getPersons());
+            statement1.setInt(++k, request.getRooms());
+            statement1.setString(++k, request.getAdditionalInformation());
+            statement1.setInt(++k, request.getUser().getId());
 
             int affectedRows = statement1.executeUpdate();
 
@@ -126,15 +131,15 @@ public class PostgresRequestDAO implements RequestDAO {
 
             try (ResultSet generatedKeys = statement1.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    request.setId(generatedKeys.getLong(1));
+                    request.setId(generatedKeys.getInt(1));
                 } else {
                     throw new SQLException("Creating request failed, no ID obtained.");
                 }
             }
 
             for (int i = 0; i < request.getRoomCategories().size(); i++) {
-                statement2.setLong(1, request.getId());
-                statement2.setLong(2, request.getRoomCategories().get(i).getId());
+                statement2.setInt(1, request.getId());
+                statement2.setInt(2, request.getRoomCategories().get(i).getId());
                 statement2.addBatch();
             }
 
@@ -144,41 +149,82 @@ public class PostgresRequestDAO implements RequestDAO {
                 throw new SQLException("Creating request failed, no values added to linked table.");
             }
 
-            con.commit();
-
         } catch (SQLException e) {
-            e.printStackTrace();  // TODO: 29.08.2022
+            throw new DaoException(e.getMessage());
         }
 
     }
 
-    private void fillRequests(List<Request> result, PreparedStatement statement, String locale) throws SQLException {
+    private List<Request> fillRequests(ResultSet resultSet, String locale) throws DaoException, SQLException {
+        List<Request> result = new ArrayList<>();
+        EntityTransaction transaction = new EntityTransaction(connection);
         UserDAO userDAO = new PostgresUserDAO();
         RoomCategoryDAO roomCategoryDAO = new PostgresRoomCategoryDAO();
+        ReservationDAO reservationDAO = new PostgresReservationDAO();
 
-        try (ResultSet resultSet = statement.executeQuery()) {
+        transaction.initTransaction(userDAO, roomCategoryDAO, reservationDAO);
+
+        try {
+
             while (resultSet.next()) {
+
                 Request request = new Request();
 
-                request.setId(resultSet.getLong(1));
-                request.setCheckinDate(resultSet.getDate(2).toLocalDate());
-                request.setCheckoutDate(resultSet.getDate(3).toLocalDate());
-                request.setPersons(resultSet.getInt(4));
-                request.setRooms(resultSet.getInt(5));
-                request.setAdditionalInformation(resultSet.getString(6));
-                request.setReservation(null); // TODO: 04.09.2022
-                try {
-                    request.setUser(userDAO.find(resultSet.getLong(9)));
-                } catch (NoUserFoundException e) {
-                    throw new RuntimeException(e);
-                }
+                request.setId(resultSet.getInt("reservation_request_id"));
+                request.setCheckinDate(resultSet.getDate("checkin_date").toLocalDate());
+                request.setCheckoutDate(resultSet.getDate("checkout_date").toLocalDate());
+                request.setPersons(resultSet.getInt("persons"));
+                request.setRooms(resultSet.getInt("rooms"));
+                request.setAdditionalInformation(resultSet.getString("additional_information"));
+                request.setReservation(reservationDAO.find(resultSet.getInt("reservation_id"), locale));
 
-                request.setRoomCategories(roomCategoryDAO.findAllForRequest(request.getId(), locale));
+                User user = userDAO.find(resultSet.getInt("user_id"));
+                if (user == null) throw new DaoException("User not found");
+                request.setUser(user);
+
+                List<RoomCategory> roomCategories = roomCategoryDAO.findAllForRequest(request.getId(), locale);
+                request.setRoomCategories(roomCategories);
 
                 result.add(request);
-
             }
+
+            transaction.commit();
+
+        } catch (DaoException e) {
+            transaction.rollback();
+            throw new DaoException(e.getMessage());
         }
+
+        return result;
     }
 
+    @Override
+    public List<Request> findAll() throws DaoException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Request> findAll(String locale) throws DaoException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Request find(int id) throws DaoException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void update(Request request) throws DaoException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void update(Request request, String locale) throws DaoException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void delete(Request request) throws DaoException {
+        throw new UnsupportedOperationException();
+    }
 }

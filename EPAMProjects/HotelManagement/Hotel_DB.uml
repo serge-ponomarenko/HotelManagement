@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>DATABASE</ID>
+  <OriginalElement>07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.categories</OriginalElement>
+  <nodes>
+    <node x="-689.8564099066348" y="1002.3854580815395">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.user_settings</node>
+    <node x="-1155.533590569211" y="524.866454689984">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservations</node>
+    <node x="-1190.5347533465751" y="363.4448733413749">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.statuses</node>
+    <node x="-1116.5492427331174" y="28.904414957780475">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.categories_tr</node>
+    <node x="-992.8028776281093" y="307.06342581423394">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.locales</node>
+    <node x="-911.235188608736" y="577.9196238144326">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservation_requests</node>
+    <node x="-1395.266629065041" y="365.3768395657419">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.statuses_tr</node>
+    <node x="-1373.4369682970523" y="64.90441495778047">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.categories</node>
+    <node x="-1235.0347533465751" y="903.0">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.users</node>
+    <node x="-1610.3207489517854" y="341.3768395657419">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.rooms</node>
+    <node x="-1557.3181641375688" y="137.35993537964455">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.rooms_tr</node>
+    <node x="-1858.5124371917555" y="461.2237321957864">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.room_images</node>
+    <node x="-824.235188608736" y="196.98083149014587">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservation_requests_categories</node>
+    <node x="-1555.3364836443866" y="644.866454689984">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservations_rooms</node>
+    <node x="-1198.5347533465751" y="1165.5404583835943">07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.user_roles</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservation_requests_categories" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservation_requests" relationship="REFERENCES">
+      <point x="-76.36991639934172" y="41.676632160904376" />
+      <point x="-777.1051050080778" y="470.2816778199789" />
+      <point x="-816.735188608736" y="470.2816778199789" />
+      <point x="0.0" y="-127.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.rooms_tr" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.rooms" relationship="REFERENCES">
+      <point x="-44.00258481421656" y="78.99999999999997" />
+      <point x="0.0" y="-91.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.categories_tr" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.locales" relationship="REFERENCES">
+      <point x="73.0" y="0.0" />
+      <point x="-933.8028776281093" y="107.90441495778047" />
+      <point x="0.0" y="-67.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservations" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.statuses" relationship="REFERENCES">
+      <point x="-45.50116277736424" y="-115.0" />
+      <point x="0.0" y="43.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.rooms" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.categories" relationship="REFERENCES">
+      <point x="-73.0" y="-15.0" />
+      <point x="-1627.8207489517854" y="417.3768395657419" />
+      <point x="-1627.8207489517854" y="93.78432956381258" />
+      <point x="-73.0" y="-14.120085393967898" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.statuses_tr" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.statuses" relationship="REFERENCES">
+      <point x="66.0" y="-25.931966224366988" />
+      <point x="-62.5" y="0.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.room_images" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.rooms" relationship="REFERENCES">
+      <point x="76.0" y="-12.346892630044522" />
+      <point x="-73.0" y="83.5" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservations_rooms" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.rooms" relationship="REFERENCES">
+      <point x="-62.9842653073988" y="-55.0" />
+      <point x="0.0" y="91.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservations_rooms" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservations" relationship="REFERENCES">
+      <point x="81.0" y="0.0" />
+      <point x="-73.0" y="60.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservations" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.users" relationship="REFERENCES">
+      <point x="-62.50116277736424" y="115.0" />
+      <point x="0.0" y="-103.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.user_settings" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.locales" relationship="REFERENCES">
+      <point x="0.0" y="-79.00000000000011" />
+      <point x="-611.8564099066348" y="374.06342581423394" />
+      <point x="59.0" y="0.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.statuses_tr" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.locales" relationship="REFERENCES">
+      <point x="0.0" y="-67.0" />
+      <point x="-1329.266629065041" y="323.877" />
+      <point x="-59.0" y="-50.18642581423393" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.user_settings" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.users" relationship="REFERENCES">
+      <point x="-78.0" y="0.0" />
+      <point x="90.0" y="75.38545808153958" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.categories_tr" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.categories" relationship="REFERENCES">
+      <point x="-73.0" y="-4.320246944856407" />
+      <point x="73.0" y="-4.320246944856407" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.rooms_tr" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.locales" relationship="REFERENCES">
+      <point x="64.0" y="0.0" />
+      <point x="-948.8028776281093" y="216.35993537964455" />
+      <point x="-15.0" y="-67.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.users" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.user_roles" relationship="REFERENCES">
+      <point x="0.0" y="103.0" />
+      <point x="0.0" y="-43.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservation_requests" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservations" relationship="REFERENCES">
+      <point x="-94.5" y="-65.05316912444857" />
+      <point x="73.0" y="0.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservation_requests_categories" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.categories" relationship="REFERENCES">
+      <point x="0.0" y="-42.5" />
+      <point x="-700.735188608736" y="11.404414957780475" />
+      <point x="-1300.4369682970523" y="11.404414957780475" />
+      <point x="0.0" y="-43.0" />
+    </edge>
+    <edge source="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.reservation_requests" target="07325b1c-5f14-42d7-ac45-2366db60eebf.TABLE:hotel_db.public.users" relationship="REFERENCES">
+      <point x="0.0" y="127.0" />
+      <point x="-816.735188608736" y="1006.0" />
+      <point x="90.0" y="0.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="0.49088025376685174" showDependencies="false" x="-1114.2545395799675" y="562.4179321486267" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Columns</Category>
+    <Category>Comments</Category>
+    <Category>Key columns</Category>
+    <Category>Virtual foreign keys</Category>
+  </Categories>
+</Diagram>
+

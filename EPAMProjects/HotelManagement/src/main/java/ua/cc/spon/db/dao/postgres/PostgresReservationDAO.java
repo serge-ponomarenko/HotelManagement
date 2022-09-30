@@ -1,23 +1,21 @@
 package ua.cc.spon.db.dao.postgres;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ua.cc.spon.db.DataSource;
+import ua.cc.spon.db.dao.EntityTransaction;
 import ua.cc.spon.db.dao.ReservationDAO;
 import ua.cc.spon.db.dao.RoomDAO;
 import ua.cc.spon.db.dao.UserDAO;
 import ua.cc.spon.db.entity.Reservation;
 import ua.cc.spon.db.entity.User;
-import ua.cc.spon.exception.DBException;
-import ua.cc.spon.exception.NoUserFoundException;
+import ua.cc.spon.exception.DaoException;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PostgresReservationDAO implements ReservationDAO {
-
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+public class PostgresReservationDAO extends ReservationDAO {
 
     private static final String INSERT_RESERVATION =
             "INSERT INTO reservations " +
@@ -61,78 +59,90 @@ public class PostgresReservationDAO implements ReservationDAO {
                     "reservation_id IN ( " +
                     "SELECT reservation_id FROM reservations " +
                     "WHERE status_id IN (2) AND ( " +
-                    "checkin_date + INTERVAL '9 hour' - now() < INTERVAL '0 hour' OR " +
-                    "created_at + INTERVAL '2 day' - now() < INTERVAL '0 hour') " +
+                    "checkin_date + (INTERVAL '9' HOUR) - now() < INTERVAL '0' HOUR OR " +
+                    "created_at + INTERVAL '2' DAY - now() < INTERVAL '0' HOUR) " +
                     ")";
 
-    private static final String UPDATE_CHECKIN_STATUSES = "UPDATE reservations " +
-            "SET status_id = 4 WHERE " +
-            "reservation_id IN ( " +
-            "SELECT reservation_id FROM reservations " +
-            "WHERE status_id IN (3) AND (checkin_date <= current_date))";
+    private static final String UPDATE_CHECKIN_STATUSES =
+            "UPDATE reservations " +
+                    "SET status_id = 4 WHERE " +
+                    "reservation_id IN ( " +
+                    "SELECT reservation_id FROM reservations " +
+                    "WHERE status_id IN (3) AND (checkin_date <= current_date))";
 
-    private static final String UPDATE_CHECKOUT_STATUSES = "UPDATE reservations " +
-            "SET status_id = 6 WHERE " +
-            "reservation_id IN ( " +
-            "SELECT reservation_id FROM reservations " +
-            "WHERE status_id IN (4) AND (checkout_date = current_date))";
+    private static final String UPDATE_CHECKOUT_STATUSES =
+            "UPDATE reservations " +
+                    "SET status_id = 6 WHERE " +
+                    "reservation_id IN ( " +
+                    "SELECT reservation_id FROM reservations " +
+                    "WHERE status_id IN (4) AND (checkout_date = current_date))";
 
     @Override
-    public List<Reservation> findByUser(User user, String locale) throws DBException {
-        List<Reservation> result = new ArrayList<>();
+    public List<Reservation> findByUser(User user, String locale) throws DaoException {
+        List<Reservation> result;
 
-        try (Connection con = DataSource.getConnection();
-             PreparedStatement statement = con.prepareStatement(FIND_BY_USER)) {
+        try (PreparedStatement statement = connection.prepareStatement(FIND_BY_USER)) {
 
-            statement.setLong(1, user.getId());
+            statement.setInt(1, user.getId());
 
-            fillReservations(result, statement, locale);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                result = fillReservations(resultSet, locale);
+            }
 
         } catch (SQLException e) {
-            logger.error(e.getMessage(), e);
-            throw new DBException(e);
+            throw new DaoException(e.getMessage());
         }
 
         return result;
     }
 
     @Override
-    public List<Reservation> findAll(String locale) throws DBException {
+    public Reservation find(int id, String locale) throws DaoException {
+        List<Reservation> result;
 
-        List<Reservation> result = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(FIND_BY_ID)) {
 
-        try (Connection con = DataSource.getConnection();
-             PreparedStatement statement = con.prepareStatement(FIND_ALL)) {
+            statement.setInt(1, id);
 
-            fillReservations(result, statement, locale);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                result = fillReservations(resultSet, locale);
+            }
 
         } catch (SQLException e) {
-            logger.error(e.getMessage(), e);
-            throw new DBException(e);
+            throw new DaoException(e.getMessage());
+        }
+
+        return !result.isEmpty() ? result.get(0) : null;
+    }
+
+    @Override
+    public List<Reservation> findAll(String locale) throws DaoException {
+        List<Reservation> result;
+
+        try (Statement statement = connection.createStatement()) {
+
+            try (ResultSet resultSet = statement.executeQuery(FIND_ALL)) {
+                result = fillReservations(resultSet, locale);
+            }
+
+        } catch (SQLException e) {
+            throw new DaoException(e.getMessage());
         }
 
         return result;
-
-    }
-
-
-    @Override
-    public Reservation find(long reservationId) {
-
-        return null;
     }
 
     @Override
-    public void insert(Connection con, Reservation reservation) {
-        try (PreparedStatement statement1 = con.prepareStatement(INSERT_RESERVATION, Statement.RETURN_GENERATED_KEYS);
-             PreparedStatement statement2 = con.prepareStatement(INSERT_RESERVATIONS_ROOMS)) {
-
-            statement1.setString(1, reservation.getCheckinDate().toString());
-            statement1.setString(2, reservation.getCheckoutDate().toString());
-            statement1.setLong(3, reservation.getStatus().getId());
-            statement1.setLong(4, reservation.getUser().getId());
-            statement1.setInt(5, reservation.getPersons());
-            statement1.setBigDecimal(6, reservation.getPrice());
+    public void insert(Reservation reservation) throws DaoException {
+        try (PreparedStatement statement1 = connection.prepareStatement(INSERT_RESERVATION, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement statement2 = connection.prepareStatement(INSERT_RESERVATIONS_ROOMS)) {
+            int k = 0;
+            statement1.setString(++k, reservation.getCheckinDate().toString());
+            statement1.setString(++k, reservation.getCheckoutDate().toString());
+            statement1.setInt(++k, reservation.getStatus().getId());
+            statement1.setInt(++k, reservation.getUser().getId());
+            statement1.setInt(++k, reservation.getPersons());
+            statement1.setBigDecimal(++k, reservation.getPrice());
 
             int affectedRows = statement1.executeUpdate();
 
@@ -142,14 +152,14 @@ public class PostgresReservationDAO implements ReservationDAO {
 
             try (ResultSet generatedKeys = statement1.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    reservation.setId(generatedKeys.getLong(1));
+                    reservation.setId(generatedKeys.getInt(1));
                 } else {
                     throw new SQLException("Creating reservation failed, no ID obtained.");
                 }
             }
             for (int i = 0; i < reservation.getRooms().size(); i++) {
-                statement2.setLong(1, reservation.getId());
-                statement2.setLong(2, reservation.getRooms().get(i).getId());
+                statement2.setInt(1, reservation.getId());
+                statement2.setInt(2, reservation.getRooms().get(i).getId());
                 statement2.addBatch();
             }
 
@@ -160,42 +170,17 @@ public class PostgresReservationDAO implements ReservationDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();  // TODO: 29.08.2022
+            throw new DaoException();
         }
 
-
     }
 
     @Override
-    public void insert(Reservation reservation) {
-
-        try (Connection con = DataSource.getConnection()) {
-
-            con.setAutoCommit(false);
-
-            insert(con, reservation);
-
-            con.commit();
-
-        } catch (SQLException e) {
-            e.printStackTrace();  // TODO: 29.08.2022
-        }
-
-
-    }
-
-    @Override
-    public void update(Reservation reservation) {
-
-    }
-
-    @Override
-    public void updateStatus(Reservation reservation) {
-        try (Connection con = DataSource.getConnection();
-             PreparedStatement statement = con.prepareStatement(UPDATE_RESERVATION_STATUS)) {
-
-            statement.setLong(1, reservation.getStatus().getId());
-            statement.setLong(2, reservation.getId());
+    public void updateStatus(Reservation reservation) throws DaoException {
+        try (PreparedStatement statement = connection.prepareStatement(UPDATE_RESERVATION_STATUS)) {
+            int k = 0;
+            statement.setInt(++k, reservation.getStatus().getId());
+            statement.setInt(++k, reservation.getId());
 
             int affectedRows = statement.executeUpdate();
 
@@ -204,31 +189,30 @@ public class PostgresReservationDAO implements ReservationDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();  // TODO: 29.08.2022
+            throw new DaoException(e.getMessage());
         }
     }
 
     @Override
-    public void updateExpiredPaidStatuses() {
+    public void updateExpiredPaidStatuses() throws DaoException {
         executeUpdateQuery(UPDATE_NOT_PAID_STATUSES);
     }
 
     @Override
-    public void updateCheckinStatuses() {
+    public void updateCheckinStatuses() throws DaoException {
         executeUpdateQuery(UPDATE_CHECKIN_STATUSES);
     }
 
     @Override
-    public void updateCheckoutStatuses() {
+    public void updateCheckoutStatuses() throws DaoException {
         executeUpdateQuery(UPDATE_CHECKOUT_STATUSES);
     }
 
     @Override
-    public void delete(Reservation reservation) {
-        try (Connection con = DataSource.getConnection();
-             PreparedStatement statement = con.prepareStatement(DELETE_RESERVATION)) {
+    public void delete(Reservation reservation) throws DaoException {
+        try (PreparedStatement statement = connection.prepareStatement(DELETE_RESERVATION)) {
 
-            statement.setLong(1, reservation.getId());
+            statement.setInt(1, reservation.getId());
 
             int affectedRows = statement.executeUpdate();
 
@@ -237,49 +221,81 @@ public class PostgresReservationDAO implements ReservationDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();  // TODO: 29.08.2022
+            throw new DaoException(e.getMessage());
         }
 
     }
 
-    private void fillReservations(List<Reservation> result, PreparedStatement statement, String locale) throws SQLException {
+    private List<Reservation> fillReservations(ResultSet resultSet, String locale) throws DaoException {
+        List<Reservation> result = new ArrayList<>();
 
-        PostgresUserDAO postgresUserDAO = new PostgresUserDAO();
+        UserDAO userDAO = new PostgresUserDAO();
+        RoomDAO roomDAO = new PostgresRoomDAO();
+        EntityTransaction transaction = new EntityTransaction(connection);
 
-        try (ResultSet resultSet = statement.executeQuery()) {
+        transaction.initTransaction(userDAO, roomDAO);
+
+        try {
+
             while (resultSet.next()) {
                 Reservation reservation = new Reservation();
-                RoomDAO roomDAO = new PostgresRoomDAO();
 
-                reservation.setId(resultSet.getLong(1));
+                reservation.setId(resultSet.getInt(1));
                 reservation.setCheckinDate(resultSet.getDate(2).toLocalDate());
                 reservation.setCheckoutDate(resultSet.getDate(3).toLocalDate());
                 reservation.setStatus(Reservation.Status.valueOf(resultSet.getString(4)));
                 reservation.setCreatedAt(resultSet.getTimestamp(6));
                 reservation.setPersons(resultSet.getInt(7));
                 reservation.setPrice(resultSet.getBigDecimal(8));
-                reservation.setUser(postgresUserDAO.find(resultSet.getLong(5)));
-
+                User user = userDAO.find(resultSet.getInt(5));
+                if (user == null) throw new DaoException("User not found");
+                reservation.setUser(user);
                 reservation.setRooms(roomDAO.findByReservation(reservation.getId(), locale));
 
                 result.add(reservation);
 
             }
-        } catch (NoUserFoundException e) {
-            throw new RuntimeException(e); // TODO: 20.09.2022
+            transaction.commit();
+
+        } catch (DaoException | SQLException e) {
+            transaction.rollback();
+            throw new DaoException(e.getMessage());
         }
+        return result;
     }
 
-    private static void executeUpdateQuery(String query) {
-        try (Connection con = DataSource.getConnection();
-             PreparedStatement statement = con.prepareStatement(query)) {
+    private void executeUpdateQuery(String query) throws DaoException {
+        try (Statement statement = connection.createStatement()) {
 
-            statement.executeUpdate();
+            statement.executeUpdate(query);
 
         } catch (SQLException e) {
-            e.printStackTrace();  // TODO: 29.08.2022
+            throw new DaoException(e.getMessage());
         }
     }
 
+    @Override
+    public List<Reservation> findAll() throws DaoException {
+        throw new UnsupportedOperationException();
+    }
 
+    @Override
+    public Reservation find(int id) throws DaoException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void update(Reservation reservation) throws DaoException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void update(Reservation reservation, String locale) throws DaoException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void delete(int id) throws DaoException {
+        throw new UnsupportedOperationException();
+    }
 }

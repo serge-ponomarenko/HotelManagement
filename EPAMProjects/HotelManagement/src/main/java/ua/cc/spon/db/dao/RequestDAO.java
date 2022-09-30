@@ -1,19 +1,33 @@
 package ua.cc.spon.db.dao;
 
 import ua.cc.spon.db.entity.Request;
-import ua.cc.spon.exception.DBException;
+import ua.cc.spon.exception.DaoException;
 
 import java.util.List;
 
-public interface RequestDAO {
+/**
+ * Class represents DAO layer for {@link Request} class.
+ *
+ * @author Sergiy Ponomarenko
+ */
+public abstract class RequestDAO extends AbstractDao<Request> {
 
-    void insert(Request request);
+    /**
+     * Method returns List of pending request from Database.
+     *
+     * @param locale short name of {@link ua.cc.spon.db.entity.Locale} for {@link Request} strings data
+     * @return List of {@link Request}. If no values found it returns empty List.
+     * @throws DaoException on {@link java.sql.SQLException}
+     */
+    public abstract List<Request> findAllPending(String locale) throws DaoException;
 
-    List<Request> findAllPending(String locale);
+    /**
+     * Method updates in Database only reservation_id field in {@link Request} db
+     * table for provided {@link Request} object.
+     *
+     * @param request A {@link Request} object where need be updated {@link ua.cc.spon.db.entity.Reservation} ID.
+     * @throws DaoException on {@link java.sql.SQLException}
+     */
+    public abstract void updateReservation(Request request) throws DaoException;
 
-    Request find(long requestId, String locale);
-
-    void updateReservation(Request request);
-
-    void deleteById(long requestId) throws DBException;
 }

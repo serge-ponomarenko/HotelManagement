@@ -7,6 +7,10 @@ import ua.cc.spon.util.HotelHelper;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * Data Source class. Configures Hikari Pool Connection.
+ * Retrieves configuration parameters from "app.properties".
+ */
 public class DataSource {
 
     private static final HikariConfig config = new HikariConfig();
@@ -26,10 +30,12 @@ public class DataSource {
         ds = new HikariDataSource(config);
     }
 
-    private DataSource() {
+    private DataSource() {    }
 
-    }
-
+    /**
+     * @return {@link Connection} from pool.
+     * @throws SQLException if couldn't retrieve connection from pool.
+     */
     public static Connection getConnection() throws SQLException {
         return ds.getConnection();
     }

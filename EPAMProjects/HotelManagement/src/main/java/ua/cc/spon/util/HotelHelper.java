@@ -1,15 +1,16 @@
 package ua.cc.spon.util;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
-import java.util.ResourceBundle;
 
 public class HotelHelper {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HotelHelper.class);
 
     private HotelHelper() {
     }
@@ -23,7 +24,7 @@ public class HotelHelper {
         try {
             properties.load(inputStream);
         } catch (IOException e) {
-            throw new RuntimeException(e); // TODO: 23.08.2022
+            LOGGER.error(e.getMessage(), e);
         }
         result = properties.getProperty(name);
 
@@ -32,34 +33,24 @@ public class HotelHelper {
     }
 
     public static void proceedMessages(HttpServletRequest req) {
-
+        String successMessageString = "success_message";
         String successMessage = null;
-        if (req.getSession().getAttribute("success_message") != null) {
-            successMessage = (String) req.getSession().getAttribute("success_message");
-            req.getSession().removeAttribute("success_message");
+
+        if (req.getSession().getAttribute(successMessageString) != null) {
+            successMessage = (String) req.getSession().getAttribute(successMessageString);
+            req.getSession().removeAttribute(successMessageString);
         }
+
+        String failMessageString = "fail_message";
         String failMessage = null;
-        if (req.getSession().getAttribute("fail_message") != null) {
-            failMessage = (String) req.getSession().getAttribute("fail_message");
-            req.getSession().removeAttribute("fail_message");
+        if (req.getSession().getAttribute(failMessageString) != null) {
+            failMessage = (String) req.getSession().getAttribute(failMessageString);
+            req.getSession().removeAttribute(failMessageString);
         }
 
-        req.setAttribute("success_message", successMessage);
-        req.setAttribute("fail_message", failMessage);
+        req.setAttribute(successMessageString, successMessage);
+        req.setAttribute(failMessageString, failMessage);
 
     }
-
-    public static String getLocalizedString(String key) {
-        ResourceBundle mybundle = ResourceBundle.getBundle("Strings", Locale.getDefault(), new ResourceBundle.Control() {
-            @Override
-            public List<Locale> getCandidateLocales(String baseName, Locale locale) {
-                List<Locale> list = super.getCandidateLocales(baseName, locale);
-                list.add(new Locale("en", "US"));
-                return list;
-            }
-        });
-        return mybundle.getString(key);
-    }
-
 
 }

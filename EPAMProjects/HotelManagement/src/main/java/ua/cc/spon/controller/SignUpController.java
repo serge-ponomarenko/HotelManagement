@@ -6,13 +6,12 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import ua.cc.spon.db.dao.DAOFactory;
-import ua.cc.spon.db.dao.LocaleDAO;
-import ua.cc.spon.db.dao.UserDAO;
-import ua.cc.spon.db.dao.UserSettingsDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ua.cc.spon.db.dao.*;
 import ua.cc.spon.db.entity.User;
 import ua.cc.spon.db.entity.UserSettings;
-import ua.cc.spon.exception.DBException;
+import ua.cc.spon.exception.DaoException;
 import ua.cc.spon.exception.InvalidEmailParameterException;
 import ua.cc.spon.exception.InvalidPasswordParameterException;
 import ua.cc.spon.exception.UserIsAlreadyRegisteredException;
@@ -26,22 +25,34 @@ import static ua.cc.spon.util.Constants.*;
 @WebServlet("/signUpAction")
 public class SignUpController extends HttpServlet {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SignUpController.class);
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         ServletContext context = req.getServletContext();
         DAOFactory factory = (DAOFactory) context.getAttribute("DAOFactory");
-        LocaleDAO localeDAO = factory.getLocaleDAO();
+        EntityTransaction transaction = new EntityTransaction();
 
-        req.setAttribute("locales", localeDAO.findALL());
+        LocaleDAO localeDAO = factory.getLocaleDAO();
+        transaction.init(localeDAO);
+        try {
+            req.setAttribute("locales", localeDAO.findAllMapByName());
+        } catch (DaoException e) {
+            LOGGER.error(e.getMessage(), e);
+            resp.sendRedirect("errorAction");
+        } finally {
+            transaction.end();
+        }
 
         req.getRequestDispatcher(SIGN_UP_URL).forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
         ServletContext context = req.getServletContext();
         DAOFactory factory = (DAOFactory) context.getAttribute("DAOFactory");
+        EntityTransaction transaction = new EntityTransaction();
+
         UserDAO userDAO = factory.getUserDAO();
         UserSettingsDAO userSettingsDAO = factory.getUserSettingsDAO();
 
@@ -64,9 +75,11 @@ public class SignUpController extends HttpServlet {
             userLastName = validator.validateAndGetString("lastName", FIRST_LAST_NAME_PATTERN, new IllegalArgumentException());
             userLocale = validator.validateAndGetString("locale", LOCALE_PATTERN, new IllegalArgumentException());
         } catch (InvalidEmailParameterException | InvalidPasswordParameterException e) {
+            LOGGER.warn(e.getMessage());
             resp.sendRedirect("signUpAction?msg=" + e.getMessage());
             return;
         } catch (IllegalArgumentException e) {
+            LOGGER.warn(e.getMessage());
             resp.sendRedirect("signUpAction?msg=invalidParameters");
             return;
         }
@@ -78,25 +91,35 @@ public class SignUpController extends HttpServlet {
         user.setLastName(userLastName);
         user.setRole(User.Role.USER);
 
+        transaction.initTransaction(userDAO, userSettingsDAO);
+
         try {
-            userDAO.insert(user);
+            userDAO.insertUser(user);
 
             UserSettings userSettings = new UserSettings();
             userSettings.setUserId(user.getId());
             userSettings.setLocale(userLocale);
             userSettingsDAO.insert(userSettings);
 
+            transaction.commit();
+
+            LOGGER.info("User #{} - {} created", user.getId(), user.getEmail());
+
             LoginService.initializeSession(req, resp, user, false);
 
-        } catch (UserIsAlreadyRegisteredException e) {
-            resp.sendRedirect("signUpAction?msg=" + e.getMessage() + "&locale=" + userLocale);
-            return;
-        } catch (DBException e) {
-            resp.sendRedirect("signUnAction?msg=invalidParameters");
-            return;
-        }
+            resp.sendRedirect("indexAction");
 
-        resp.sendRedirect("indexAction");
+        } catch (UserIsAlreadyRegisteredException e) {
+            LOGGER.warn(e.getMessage());
+            transaction.rollback();
+            resp.sendRedirect("signUpAction?msg=" + e.getMessage() + "&locale=" + userLocale);
+        } catch (DaoException e) {
+            LOGGER.error(e.getMessage(), e);
+            transaction.rollback();
+            resp.sendRedirect("signUnAction?msg=invalidParameters");
+        } finally {
+            transaction.endTransaction();
+        }
 
     }
 

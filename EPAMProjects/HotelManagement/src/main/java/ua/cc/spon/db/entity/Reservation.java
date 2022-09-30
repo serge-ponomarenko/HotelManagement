@@ -9,10 +9,14 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ * @author Sergiy Ponomarenko
+ */
 @Data
 public class Reservation implements Entity, Serializable {
 
-    private long id;
+    private int id;
     private LocalDate checkinDate;
     private LocalDate checkoutDate;
     private Status status;
@@ -23,7 +27,7 @@ public class Reservation implements Entity, Serializable {
 
     private List<Room> rooms = new ArrayList<>();
 
-    public enum Status {
+    public enum Status implements Entity {
         FREE(1),
         BOOKED(2),
         PAID(3),
@@ -32,13 +36,13 @@ public class Reservation implements Entity, Serializable {
         COMPLETED(6),
         CANCELED(7);
 
-        private long id;
+        private int id;
 
-        Status(long id) {
+        Status(int id) {
             this.id = id;
         }
 
-        public long getId() {
+        public int getId() {
             return id;
         }
     }

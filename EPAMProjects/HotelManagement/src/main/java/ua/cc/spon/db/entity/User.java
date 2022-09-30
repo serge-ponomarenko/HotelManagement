@@ -5,10 +5,14 @@ import lombok.Data;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
+/**
+ *
+ * @author Sergiy Ponomarenko
+ */
 @Data
 public class User implements Entity, Serializable {
 
-    private long id;
+    private int id;
     private String email;
     private String password;
     private String firstName;
@@ -16,7 +20,6 @@ public class User implements Entity, Serializable {
     private Timestamp registeredDate;
 
     private Role role;
-
     public enum Role {
         ADMINISTRATOR,
         MANAGER,

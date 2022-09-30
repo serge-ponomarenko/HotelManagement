@@ -6,32 +6,37 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import ua.cc.spon.db.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ua.cc.spon.db.dao.DAOFactory;
+import ua.cc.spon.db.dao.EntityTransaction;
 import ua.cc.spon.db.dao.ReservationDAO;
 import ua.cc.spon.db.dao.RoomDAO;
 import ua.cc.spon.db.entity.Reservation;
 import ua.cc.spon.db.entity.Room;
 import ua.cc.spon.db.entity.User;
 import ua.cc.spon.db.entity.UserSettings;
+import ua.cc.spon.exception.DaoException;
 import ua.cc.spon.exception.RoomHasAlreadyBookedException;
 import ua.cc.spon.service.RequestParametersValidatorService;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @WebServlet({"/setMaintenanceAction"})
 public class MaintenanceController extends HttpServlet {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MaintenanceController.class);
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
         ServletContext context = req.getServletContext();
         DAOFactory factory = (DAOFactory) context.getAttribute("DAOFactory");
+        EntityTransaction transaction = new EntityTransaction();
+
         RoomDAO roomDAO = factory.getRoomDAO();
         ReservationDAO reservationDAO = factory.getReservationDAO();
 
@@ -49,51 +54,46 @@ public class MaintenanceController extends HttpServlet {
             checkoutDate = validator.validateAndGetDate("checkout-date", new IllegalArgumentException());
             roomId = validator.validateAndGetInt("room", new IllegalArgumentException());
         } catch (IllegalArgumentException e) {
+            LOGGER.warn(e.getMessage());
             req.getSession().setAttribute("fail_message", "error.invalidParameters");
             resp.sendRedirect("hotelOccupancyAction");
             return;
         }
 
-        int nights = (int) (checkoutDate.toEpochDay() - checkinDate.toEpochDay());
+        transaction.initTransaction(roomDAO, reservationDAO);
 
-        try (Connection con = DataSource.getConnection()) {
+        try {
 
             Room room;
 
-            con.setAutoCommit(false);
+            room = Optional.ofNullable(roomDAO.getFreeRoomById(roomId, checkinDate, checkoutDate, locale))
+                    .orElseThrow(RoomHasAlreadyBookedException::new);
 
-            try {
-                List<Room> rooms = roomDAO.findFreeRooms(con, checkinDate, checkoutDate, locale);
+            Reservation reservation = new Reservation();
+            reservation.setCheckinDate(checkinDate);
+            reservation.setCheckoutDate(checkoutDate);
+            reservation.setRooms(List.of(room));
+            reservation.setUser(user);
+            reservation.setStatus(Reservation.Status.UNAVAILABLE);
+            reservation.setPersons(1);
+            reservation.setPrice(BigDecimal.ZERO);
 
-                room = rooms.stream()
-                        .filter(r -> r.getId() == roomId)
-                        .findAny()
-                        .orElseThrow(RoomHasAlreadyBookedException::new);
+            reservationDAO.insert(reservation);
 
-                Reservation reservation = new Reservation();
-                reservation.setCheckinDate(checkinDate);
-                reservation.setCheckoutDate(checkoutDate);
-                reservation.setRooms(List.of(room));
-                reservation.setUser(user);
-                reservation.setStatus(Reservation.Status.UNAVAILABLE);
-                reservation.setPersons(1);
-                reservation.setPrice(BigDecimal.ZERO);
+            transaction.commit();
 
-                reservationDAO.insert(con, reservation);
+            LOGGER.info("Maintenance for Room #{} from {} to {} set", room.getId(), checkinDate, checkoutDate);
 
-                con.commit();
-
-            } catch (RoomHasAlreadyBookedException e) {
-                con.rollback();
-                req.getSession().setAttribute("fail_message", "error." + e.getMessage());
-                resp.sendRedirect("hotelOccupancyAction");
-                return;
-            }
-
-        } catch (SQLException e) {
+        } catch (RoomHasAlreadyBookedException e) {
+            LOGGER.warn(e.getMessage());
+            transaction.rollback();
+            req.getSession().setAttribute("fail_message", "error." + e.getMessage());
+        } catch (DaoException e) {
+            LOGGER.error(e.getMessage(), e);
+            transaction.rollback();
             req.getSession().setAttribute("fail_message", "error.someDBError");
-            resp.sendRedirect("hotelOccupancyAction");
-            return;
+        } finally {
+            transaction.endTransaction();
         }
 
         resp.sendRedirect("hotelOccupancyAction");

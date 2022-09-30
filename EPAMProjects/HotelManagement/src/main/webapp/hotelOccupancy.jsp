@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <%@ taglib prefix="myTags" tagdir="/WEB-INF/tags" %>
@@ -188,54 +188,58 @@
 
         document.addEventListener("DOMContentLoaded", function () {
 
-            var options = {
-                series: [
-                    <c:forEach items="${statusesTranslated.keySet()}" var="status">
+            var series = [
+                <c:forEach items="${statusesTranslated.keySet()}" var="status">
+                {
+                    name: '${statusesTranslated.get(status)}',
+
+                    data: [
+                        <c:if test="${status.toString().equals('FREE')}">
+                        <c:forEach items="${freeRooms}" var="room">
                         {
-                        name: '${statusesTranslated.get(status)}',
+                            x: '${room.getNumber()}',
+                            y: [new Date('${minDate.toString()}').getTime(),
+                                new Date('${maxDate.toString()}').getTime() ],
+                            reservationId: '-',
+                            userName: '-',
+                            checkinDate: '-',
+                            checkoutDate: '-',
+                            nights: '-',
+                            persons: '-',
+                            price: '-',
+                            status: 'FREE'
+                        },
+                        </c:forEach>
+                        </c:if>
 
-                        data: [
-                            <c:if test="${status.toString().equals('FREE')}">
-                            <c:forEach items="${freeRooms}" var="room">
-                            {
-                                x: '${room.getNumber()}',
-                                y: [],
-                                reservationId: '-',
-                                userName: '-',
-                                checkinDate: '-',
-                                checkoutDate: '-',
-                                persons: '-',
-                                price: '-',
-                                status: 'FREE'
-                            },
-                            </c:forEach>
-                            </c:if>
+                        <c:forEach items="${reservations.get(status)}" var="reservation" varStatus="reservationStatus">
+                        <c:forEach items="${reservation.getRooms()}" var="room" varStatus="roomStatus">
+                        {
+                            x: '${room.getNumber()}',
+                            y: [
+                                new Date('${reservation.getCheckinDate().toString()}').getTime(),
+                                new Date('${reservation.getCheckoutDate().toString()}').getTime()
+                            ],
+                            reservationId: '${reservation.getId()}',
+                            userName: '${reservation.getUser().getFirstName()} ${reservation.getUser().getLastName()}',
+                            checkinDate: '${reservation.getCheckinDate().toString()}',
+                            checkoutDate: '${reservation.getCheckoutDate().toString()}',
+                            nights: '${reservation.getCheckoutDate().toEpochDay() - reservation.getCheckinDate().toEpochDay()}',
+                            persons: '${reservation.getPersons()}',
+                            price: '${reservation.getPrice()}',
+                            status: '${reservation.getStatus().toString()}'
 
+                        },
+                        </c:forEach>
+                        </c:forEach>
+                    ]
+                },
+                </c:forEach>
 
-                            <c:forEach items="${reservations.get(status)}" var="reservation" varStatus="reservationStatus">
-                                <c:forEach items="${reservation.getRooms()}" var="room" varStatus="roomStatus">
-                                    {
-                                        x: '${room.getNumber()}',
-                                        y: [
-                                            new Date('${reservation.getCheckinDate().toString()}').getTime(),
-                                            new Date('${reservation.getCheckoutDate().toString()}').getTime()
-                                        ],
-                                            reservationId: '${reservation.getId()}',
-                                            userName: '${reservation.getUser().getFirstName()} ${reservation.getUser().getLastName()}',
-                                            checkinDate: '${reservation.getCheckinDate().toString()}',
-                                            checkoutDate: '${reservation.getCheckoutDate().toString()}',
-                                            persons: '${reservation.getPersons()}',
-                                            price: '${reservation.getPrice()}',
-                                            status: '${reservation.getStatus().toString()}'
+            ];
 
-                                    },
-                                </c:forEach>
-                            </c:forEach>
-                        ]
-                    },
-                    </c:forEach>
-
-                ],
+            var options = {
+                series: series,
 
                 chart: {
                     height: 450,
@@ -302,6 +306,7 @@
                             '<li><b>Room #</b> ' + data.x + '</li>' +
                             '<li><b>Checkin</b>: ' + data.checkinDate + '</li>' +
                             '<li><b>Checkout</b>: ' + data.checkoutDate + '</li>' +
+                            '<li><b>Nights</b>: ' + data.nights + '</li>' +
                             '<li><b>Persons</b>: ' + data.persons + '</li>' +
                             '<li><b>Total price</b>: ' + data.price + '</li>' +
                             '<li><b>User</b>: ' + data.userName + '</li>' +
@@ -326,6 +331,12 @@
             chart.render();
 
         });
+
+
+
+
+
+
 
 
 

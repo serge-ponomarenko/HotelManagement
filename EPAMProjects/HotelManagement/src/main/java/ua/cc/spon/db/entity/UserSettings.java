@@ -5,18 +5,20 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.UUID;
 
+/**
+ *
+ * @author Sergiy Ponomarenko
+ */
 @Data
 public class UserSettings implements Entity, Serializable {
 
-    private long id;
-    private long userId;
+    private int id;
+    private int userId;
     private String locale;
     private String hash;
 
     public String generateHash() {
-
-        hash = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
+        hash = UUID.randomUUID().toString().replace("-", "").substring(0, 30);
         return hash;
-
     }
 }

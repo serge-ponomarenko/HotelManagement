@@ -9,11 +9,15 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ * @author Sergiy Ponomarenko
+ */
 @Data
 @ToString(of = {"number"})
 public class Room implements Entity, Serializable {
 
-    private long id;
+    private int id;
     private String number;
     private int occupancy;
     private BigDecimal price;

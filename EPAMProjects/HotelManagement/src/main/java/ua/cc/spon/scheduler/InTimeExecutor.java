@@ -1,5 +1,8 @@
 package ua.cc.spon.scheduler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -8,19 +11,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class InTimeExecutor
-{
+public class InTimeExecutor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(InTimeExecutor.class);
+
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
     ScheduledJob myTask;
 
-    public InTimeExecutor(ScheduledJob myTask)
-    {
+    public InTimeExecutor(ScheduledJob myTask) {
         this.myTask = myTask;
-
     }
 
-    public void startExecutionAt(int targetHour, int targetMin, int targetSec)
-    {
+    public void startExecutionAt(int targetHour, int targetMin, int targetSec) {
         Runnable taskWrapper = () -> {
             myTask.execute();
             startExecutionAt(targetHour, targetMin, targetSec);
@@ -29,8 +31,7 @@ public class InTimeExecutor
         executorService.schedule(taskWrapper, delay, TimeUnit.SECONDS);
     }
 
-    private long computeNextDelay(int targetHour, int targetMin, int targetSec)
-    {
+    private long computeNextDelay(int targetHour, int targetMin, int targetSec) {
         LocalDateTime localNow = LocalDateTime.now();
         ZoneId currentZone = ZoneId.systemDefault();
         ZonedDateTime zonedNow = ZonedDateTime.of(localNow, currentZone);
@@ -42,13 +43,14 @@ public class InTimeExecutor
         return duration.getSeconds();
     }
 
-    public void stop()
-    {
+    public boolean stop() {
         executorService.shutdown();
         try {
-            executorService.awaitTermination(1, TimeUnit.DAYS);
-        } catch (InterruptedException ex) {
-           //Logger.getLogger(MyTaskExecutor.class.getName()).log(Level.SEVERE, null, ex);
+            return executorService.awaitTermination(1, TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+            Thread.currentThread().interrupt();
+            return false;
         }
     }
 }

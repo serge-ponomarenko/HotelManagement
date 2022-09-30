@@ -4,11 +4,13 @@ import jakarta.servlet.ServletContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.cc.spon.db.dao.DAOFactory;
+import ua.cc.spon.db.dao.EntityTransaction;
 import ua.cc.spon.db.dao.ReservationDAO;
+import ua.cc.spon.exception.DaoException;
 
 public class CheckinCheckoutStatusChangerJob implements ScheduledJob {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final Logger LOGGER = LoggerFactory.getLogger(CheckinCheckoutStatusChangerJob.class);
 
     private final ServletContext ctx;
 
@@ -18,14 +20,23 @@ public class CheckinCheckoutStatusChangerJob implements ScheduledJob {
 
     @Override
     public void execute() {
-
-        logger.info("Updating checkin-checkout statuses");
+        LOGGER.info("Updating checkin-checkout statuses");
 
         DAOFactory factory = (DAOFactory) ctx.getAttribute("DAOFactory");
+        EntityTransaction transaction = new EntityTransaction();
+
         ReservationDAO reservationDAO = factory.getReservationDAO();
 
-        reservationDAO.updateCheckinStatuses();
-        reservationDAO.updateCheckoutStatuses();
+        transaction.init(reservationDAO);
+
+        try {
+            reservationDAO.updateCheckinStatuses();
+            reservationDAO.updateCheckoutStatuses();
+        } catch (DaoException e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
+            transaction.end();
+        }
 
     }
 

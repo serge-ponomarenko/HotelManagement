@@ -47,7 +47,7 @@ public class RequestParametersValidatorService {
 
         try {
             result = LocalDate.parse(param);
-        } catch (DateTimeParseException ignored) {
+        } catch (DateTimeParseException e) {
             throw exception;
         }
 
@@ -94,34 +94,34 @@ public class RequestParametersValidatorService {
         return result;
     }
 
-    public <T extends Exception> List<Long> validateAndGetLongArray(String parameter, T exception) throws T {
+    public <T extends Exception> List<Integer> validateAndGetIntArray(String parameter, T exception) throws T {
         String[] param = req.getParameterValues(parameter);
-        List<Long> result = new ArrayList<>();
+        List<Integer> result = new ArrayList<>();
 
         if (param == null || param.length == 0) throw exception;
 
         try {
             for (String s : param) {
-                result.add(Long.parseLong(s));
+                result.add(Integer.parseInt(s));
             }
-        } catch (NumberFormatException ignored) {
+        } catch (NumberFormatException e) {
             throw exception;
         }
 
         return result;
     }
 
-    public List<Long> validateAndGetLongArray(String parameter) {
+    public List<Integer> validateAndGetIntArray(String parameter) {
         String[] param = req.getParameterValues(parameter);
-        List<Long> result = new ArrayList<>();
+        List<Integer> result = new ArrayList<>();
 
         if (param == null || param.length == 0) return result;
 
         try {
             for (String s : param) {
-                result.add(Long.parseLong(s));
+                result.add(Integer.parseInt(s));
             }
-        } catch (NumberFormatException ignored) {
+        } catch (NumberFormatException e) {
             result = new ArrayList<>();
         }
 
@@ -155,34 +155,6 @@ public class RequestParametersValidatorService {
 
         return result;
     }
-
-    public <T extends Exception> long validateAndGetLong(String parameter, T exception) throws T {
-        String param = req.getParameter(parameter);
-        if (param == null || param.isBlank()) throw exception;
-
-        long result;
-        try {
-            result = Long.parseLong(param);
-        } catch (NumberFormatException e) {
-            throw exception;
-        }
-
-        return result;
-    }
-
-
-    public long validateAndGetLong(String parameter, long def) {
-        String param = req.getParameter(parameter);
-        if (param == null || param.isBlank()) return def;
-
-        long result = def;
-        try {
-            result = Long.parseLong(param);
-        } catch (NumberFormatException ignored) {}
-
-        return result;
-    }
-
 
 
 }
